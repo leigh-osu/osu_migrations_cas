@@ -1,0 +1,47 @@
+id: field_collection_field_lp_picbox__to__layout_builder
+label: field_lp_picbox Field Collections
+migration_group: paragraphs_to_layout_builder
+migration_tags:
+  - Drupal 7
+  - Field Collection Content
+  - OSU Paragraphs
+  - OSU
+  - CAS Paragraphs
+  - CAS
+#deriver: Drupal\paragraphs\Plugin\migrate\D7FieldCollectionItemDeriver
+source:
+  plugin: d7_field_collection_item
+  field_name: field_lp_picbox
+  bundle: group
+process:
+  type:
+    plugin: default_value
+    default_value: 'osu_card'
+  info: field_paragraph_label
+  body:
+    - plugin: sub_process
+      source: field_lp_picbox_box_description
+      process:
+        value:
+          plugin: osu_media_wysiwyg_filter
+          source: value
+        format:
+          plugin: default_value
+          default_value: 'full_html'
+  field_osu_card_link:
+    plugin: cas_link_merge
+    source: field_lp_picbox_box_link
+    uri_scheme: 'https://'
+  field_osu_card_image:
+    plugin: sub_process
+    source: field_lp_picbox_box_image
+    process:
+      target_id:
+        plugin: migration_lookup
+        migration: upgrade_d7_media_images
+        source: fid
+destination:
+  plugin: entity:block_content
+migration_dependencies:
+  required: [ ]
+  optional: [ ]

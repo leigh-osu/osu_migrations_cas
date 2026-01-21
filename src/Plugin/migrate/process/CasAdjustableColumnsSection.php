@@ -1,0 +1,91 @@
+<?php
+
+namespace Drupal\osu_migrations_cas\Plugin\migrate\process;
+
+use Drupal\migrate\MigrateExecutableInterface;
+use Drupal\migrate\ProcessPluginBase;
+use Drupal\migrate\Row;
+use Drupal\Core\Database\Connection;
+use Drupal\Core\Database\Database;
+use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\migrate\MigrateLookupInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+
+/**
+ * Adjustable Columns serialized data Process plugin.
+ *
+ * @MigrateProcessPlugin(
+ *   id = "cas_adjustable_columns_section",
+ *   handle_multiples = TRUE
+ * )
+ */
+class CasAdjustableColumnsSection extends ProcessPluginBase implements ContainerFactoryPluginInterface {
+
+  /**
+   * The database connection object.
+   *
+   * @var \Drupal\Core\Database\Connection
+   */
+  private Connection $migrateDb;
+
+  /**
+   * The Drupal migrate lookup service.
+   *
+   * @var \Drupal\migrate\MigrateLookupInterface
+   */
+  private MigrateLookupInterface $migrateLookup;
+
+  /**
+   * Constructs a new object of the class.
+   *
+   * @param array $configuration
+   *   The plugin configuration.
+   * @param string $plugin_id
+   *   The plugin ID.
+   * @param mixed $plugin_definition
+   *   The plugin definition.
+   * @param \Drupal\migrate\MigrateLookupInterface $migrateLookup
+   *   The migrate lookup interface.
+   */
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, MigrateLookupInterface $migrateLookup) {
+    parent::__construct($configuration, $plugin_id, $plugin_definition);
+    $this->migrateDb = Database::getConnection('default', 'migrate');
+    $this->migrateLookup = $migrateLookup;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+    return new static($configuration, $plugin_id, $plugin_definition, $container->get('migrate.lookup'));
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function transform($value, MigrateExecutableInterface $migrate_executable, Row $row, $destination_property) {
+    $extra_data = array();
+    $block_ids = [];
+    foreach ($value as $item) {
+      $block_id = $this->migrateLookup->lookup('field_collection_field_lp_adj_column__to__layout_builder', [$item['value']]);
+      $block_ids[] = reset($block_id)['id'];
+    }
+    $extra_data['migration']['adjustable_columns_section']['attached_block_ids'] = implode(',', $block_ids);
+    $field_list = array(
+      'field_lp_row_min_height',
+      'field_lp_row_padding',
+      'field_lp_background_color',
+      'field_lp_background_video',
+      'eb_background',
+      'field_lp_row_class',
+      'field_lp_row_style'
+    );
+    foreach ($field_list as $field) {
+      $field_data = $row->getSourceProperty($field);
+      if (isset($field_data[0])) {
+        $extra_data['migration']['adjustable_columns_section'][$field] = $field_data;
+      }
+    }
+    return serialize($extra_data);
+  }
+}

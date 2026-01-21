@@ -1,0 +1,39 @@
+id: paragraph_lp_vertical_tabs__to__layout_builder
+label: Drupal 7 lp_vertical_tabs Paragraphs
+migration_group: paragraphs_to_layout_builder
+dependencies:
+  enforced:
+    module:
+      - osu_migrations
+      - paragraphs_to_layout_builder
+migration_tags:
+  - Drupal 7
+  - Content
+  - Layout content
+  - OSU Paragraphs
+  - OSU
+  - CAS Paragraphs
+  - CAS
+source:
+  plugin: d7_paragraphs_item
+  bundle: lp_vertical_tabs
+  key: migrate
+process:
+  type:
+    plugin: default_value
+    default_value: 'osu_accordion'
+  field_osu_paragraph_item:
+    plugin: cas_vertical_tabs_item
+    source:
+      - field_lp_vertical_tabset
+  info:
+    plugin: default_value
+    default_value: 'Migrated d7 paragraph lp_vertical_tabs'
+  reusable:
+    plugin: default_value
+    default_value: 0
+destination:
+  plugin: entity:block_content
+migration_dependencies:
+  required: [ ]
+  optional: [ ]

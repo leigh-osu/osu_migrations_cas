@@ -1,0 +1,38 @@
+id: paragraph_lp_adjustable_columns__to__layout_builder
+label: Drupal 7 lp_adjustable_columns Paragraphs
+migration_group: paragraphs_to_layout_builder
+dependencies:
+  enforced:
+    module:
+      - osu_migrations
+      - paragraphs_to_layout_builder
+migration_tags:
+  - Drupal 7
+  - Content
+  - Layout content
+  - OSU Paragraphs
+  - OSU
+  - CAS Paragraphs
+  - CAS
+source:
+  plugin: d7_paragraphs_item
+  bundle: lp_adjustable_columns
+  key: migrate
+process:
+  type:
+    plugin: default_value
+    default_value: 'paragraph_block'
+  info:
+    plugin: default_value
+    default_value: 'Migrated d7 lp_adjustable_columns section'
+  field_block_serialized_data:
+    plugin: cas_adjustable_columns_section
+    source: field_lp_adj_column
+  reusable:
+    plugin: default_value
+    default_value: 0
+destination:
+  plugin: entity:block_content
+migration_dependencies:
+  required: [  ]
+  optional: [  ]

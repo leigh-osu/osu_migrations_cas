@@ -1,0 +1,43 @@
+id: paragraph_accordian__to__layout_builder
+# yes, the bundle is misspelled in D7 as accordian
+label: Drupal 7 accordian Paragraphs
+migration_group: paragraphs_to_layout_builder
+dependencies:
+  enforced:
+    module:
+      - osu_migrations
+      - paragraphs_to_layout_builder
+migration_tags:
+  - Drupal 7
+  - Content
+  - Layout content
+  - OSU Paragraphs
+  - OSU
+  - CAS
+  - CAS Paragraphs
+source:
+  plugin: d7_paragraphs_item
+  bundle: accordian
+  key: migrate
+process:
+  type:
+    plugin: default_value
+    default_value: 'osu_accordion'
+  field_osu_paragraph_item:
+    #use misspelling here to override processing
+    plugin: cas_accordian_item
+    source:
+      - field_accordian_heading
+      - field_accordian_body
+  field_p_accordion_heading: field_accordian_heading
+  info:
+    plugin: default_value
+    default_value: 'Migrated d7 paragraph accordian'
+  reusable:
+    plugin: default_value
+    default_value: 0
+destination:
+  plugin: entity:block_content
+migration_dependencies:
+  required: [ ]
+  optional: [ ]

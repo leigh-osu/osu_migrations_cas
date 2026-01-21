@@ -1,0 +1,47 @@
+id: paragraph_4_column_col1__to__layout_builder
+label: Drupal 7 4_column Paragraphs
+migration_group: paragraphs_to_layout_builder
+dependencies:
+  enforced:
+    module:
+      - osu_migrations
+      - paragraphs_to_layout_builder
+migration_tags:
+  - Drupal 7
+  - Content
+  - Layout content
+  - OSU Paragraphs
+  - OSU
+  - CAS Paragraphs
+  - CAS
+source:
+  plugin: d7_paragraphs_item
+  bundle: 4_column
+  key: migrate
+process:
+  type:
+    plugin: default_value
+    default_value: 'paragraph_block'
+  body:
+    - plugin: sub_process
+      source: field_p4_col1_content
+      process:
+        value:
+          plugin: osu_media_wysiwyg_filter
+          source: value
+        format:
+          plugin: default_value
+          default_value: 'full_html'
+  info:
+    plugin: default_value
+    default_value: 'Migrated d7 paragraph 4_column_col1'
+  reusable:
+    plugin: default_value
+    default_value: 0
+
+destination:
+  plugin: entity:block_content
+
+migration_dependencies:
+  required: [  ]
+  optional: [  ]
