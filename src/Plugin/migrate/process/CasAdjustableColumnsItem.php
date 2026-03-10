@@ -34,7 +34,6 @@ class CasAdjustableColumnsItem extends ProcessPluginBase {
       'field_lp_col_class',
       'field_lp_col_style',
       'field_lp_col_bg_color',
-      'field_lp_col_image',
       'field_lp_col_view',
       'field_lp_col_block'
     );

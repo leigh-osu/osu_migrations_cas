@@ -283,7 +283,7 @@ class CasLayoutBase extends LayoutBase {
 
     // Adjustable Columns
     if ($item->getMigrationId() == 'paragraph_lp_adjustable_columns__to__layout_builder') {
-      return $this->handleAdjustableColumnsItems($block);
+      return $this->handleAdjustableColumnsItems($block, $section, $row, $item);
     }
 
     // Set column settings for 1_col.
@@ -364,16 +364,20 @@ class CasLayoutBase extends LayoutBase {
    *
    * @param \Drupal\block_content\Entity\BlockContent $block
    *   The block containing IDs of the adjustable columns item blocks.
-   *
+   * @param \Drupal\paragraphs_to_layout_builder\LayoutMigrationItem $item
+   *   A migration item instance.
+   * @param \Drupal\layout_builder\Section $section
+   *   The layout builder section this block will be applied to.
+   * @param string $row
+   *   The region the component belongs within.
    * @return array
    *   layout builder block settings array
    */
-  protected function handleAdjustableColumnsItems($block) {
+  protected function handleAdjustableColumnsItems($block, $section, $row, $item) {
     // top block is the controlling row element
     $row_extra_data = unserialize($block->get('field_block_serialized_data')->value);
     $block_ids = explode(',', $row_extra_data['migration']['adjustable_columns_section']['attached_block_ids']);
     $components = [];
-    $row = 'blb_region_col_1';
 
     // set row attributes from top block
     $row_additional_settings = [];
@@ -461,18 +465,17 @@ class CasLayoutBase extends LayoutBase {
 
       //backgrounds
       if (isset($attached_block_extra_data['migration']['adjustable_columns_item']['field_lp_col_bg_color'][0]['value'])) {
+        $background_color = str_replace('larch-', 'cas-', $attached_block_extra_data['migration']['adjustable_columns_item']['field_lp_col_bg_color'][0]['value']);
         $attached_block_additional_settings['bootstrap_styles']['block_style']['background']['background_type'] = 'color';
-        $attached_block_additional_settings['bootstrap_styles']['block_style']['background_color']['class'] = $attached_block_extra_data['migration']['adjustable_columns_item']['field_lp_col_bg_color'][0]['value'];
+        $attached_block_additional_settings['bootstrap_styles']['block_style']['background_color']['class'] = $background_color;
       }
 
       $attached_block_additional_settings['component_attributes']['block_attributes']['class'] = implode(' ', $classes);
       $attached_block_additional_settings['component_attributes']['block_attributes']['style'] = implode(' ', $styles);
 
-//      'field_lp_col_image',
 //      'field_lp_col_view',
 //      'field_lp_col_block'
 
-//      $component->additional = $additional_settings;
       $additional_settings = array_merge($row_additional_settings, $attached_block_additional_settings);
       $component = $this->createSectionComponent($block_type, $block_revision_id, $row, $additional_settings, $index);
 
@@ -740,7 +743,7 @@ class CasLayoutBase extends LayoutBase {
 
         case '0':
         case '10':
-        case '20':
+        case '20'
           $settings['container'] = 'container';
           break;
       }
