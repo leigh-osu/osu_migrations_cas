@@ -743,7 +743,7 @@ class CasLayoutBase extends LayoutBase {
 
         case '0':
         case '10':
-        case '20'
+        case '20':
           $settings['container'] = 'container';
           break;
       }

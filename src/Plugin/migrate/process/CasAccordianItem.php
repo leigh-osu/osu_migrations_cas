@@ -21,7 +21,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * This bundle is misspelled in D7, and is only a single accordion instance (no grouping)
  *
  * @MigrateProcessPlugin(
- *   id = "accordian_item",
+ *   id = "cas_accordian_item",
  *   handle_multiples = TRUE
  * )
  */
