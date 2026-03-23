@@ -11,7 +11,7 @@ migration_tags:
   - OSU
   - CAS
 source:
-  plugin: d7_node
+  plugin: d7_node_domain_access
   node_type: page
   constants:
     # map paragraph types on pages to their corresponding migration filenames
@@ -37,8 +37,7 @@ source:
       paragraph_alert: 'paragraph_alert__to__layout_builder'
       paragraph_divider: 'paragraph_divider__to__layout_builder'
       paragraph_menu: 'paragraph_menu__to__layout_builder'
-      sacnas_officer_body_text_left: 'paragraph_sacnas_officer_body_text_left__to__layout_builder'
-      sacnas_officer_body_text_right: 'paragraph_sacnas_officer_body_text_right__to__layout_builder'
+      sacnas_officer_body_text: 'paragraph_sacnas_officer_body_text__to__layout_builder'
 process:
   body:
     - plugin: sub_process
@@ -71,6 +70,17 @@ process:
   type:
     plugin: default_value
     default_value: page
+  field_domain_access:
+    - plugin: sub_process
+      source: domain_access_node
+      process:
+        target_id: target_id
+  field_domain_all_affiliates:
+    - plugin: get
+      source: domain_all_affiliates
+  field_domain_source:
+    - plugin: get
+      source: domain_source
 destination:
   plugin: 'entity:node'
   bundle: page

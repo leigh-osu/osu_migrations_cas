@@ -1,0 +1,100 @@
+langcode: en
+status: true
+id: cas_150_species_to_150_species
+label: 'Basic 150 Species Content Migration'
+migration_group: content
+dependencies: { }
+migration_tags:
+  - Drupal 7
+  - Content
+  - Layout content
+  - OSU
+  - CAS
+source:
+  plugin: d7_node_domain_access
+  node_type: 150_species
+process:
+  # Title
+  title: title
+
+  # Body field
+  body:
+    plugin: sub_process
+    source: body
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      summary: summary
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+
+  # photo
+  field_150_species_photo:
+    plugin: sub_process
+    source: field_species_photo
+    process:
+      target_id:
+        plugin: migration_lookup
+        migration: upgrade_d7_files
+        source: fid
+      alt: alt
+      title: title
+      width: width
+      height: height
+
+  #taxonomy
+  field_150_species_type:
+    plugin: sub_process
+    source: field_species_type
+    process:
+      target_id: tid
+
+  # Meta tags
+  field_meta_tags:
+    plugin: d7_metatag_entities
+    source: pseudo_metatag_entities
+
+  # Path settings
+  path/pathauto:
+    plugin: default_value
+    default_value: 0
+
+  # Content type
+  type:
+    plugin: default_value
+    default_value: 150_species
+
+  # Domain access fields
+  field_domain_access:
+    plugin: sub_process
+    source: domain_access_node
+    process:
+      target_id: target_id
+
+  field_domain_all_affiliates:
+    plugin: get
+    source: domain_all_affiliates
+
+  field_domain_source:
+    plugin: get
+    source: domain_source
+
+  # Standard node fields
+  uid: node_uid
+  status: status
+  created: created
+  changed: changed
+  promote: promote
+  sticky: sticky
+
+destination:
+  plugin: 'entity:node'
+  default_bundle: 150_species
+
+migration_dependencies:
+  required:
+    - upgrade_d7_files
+    - upgrade_d7_users_with_roles
+    - upgrade_d7_taxonomy_term_150_species

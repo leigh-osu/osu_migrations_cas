@@ -1,0 +1,200 @@
+langcode: en
+status: true
+id: cas_weather_daily_data_to_weather_daily_data
+label: 'Weather Daily Data Content Migration'
+migration_group: content
+dependencies: {}
+migration_tags:
+  - Drupal 7
+  - Content
+  - OSU
+  - CAS
+
+source:
+  plugin: d7_node_domain_access
+  node_type: weather_daily_data
+
+process:
+  nid: nid
+  vid: vid
+  title: title
+  uid: node_uid
+  status: status
+  created: created
+  changed: changed
+  promote: promote
+  sticky: sticky
+
+  body:
+    plugin: sub_process
+    source: body
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      summary: summary
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+
+  field_dw_date:
+    plugin: sub_process
+    source: field_dw_date
+    process:
+      value:
+        plugin: format_date
+        from_format: 'Y-m-d H:i:s'
+        to_format: 'Y-m-d'
+        source: value
+
+  field_dw_2_inches_max:
+    plugin: sub_process
+    source: field_dw_2_inches_max
+    process:
+      value: value
+
+  field_dw_2_inches_min:
+    plugin: sub_process
+    source: field_dw_2_inches_min
+    process:
+      value: value
+
+  field_dw_4_inches_max:
+    plugin: sub_process
+    source: field_dw_4_inches_max
+    process:
+      value: value
+
+  field_dw_4_inches_min:
+    plugin: sub_process
+    source: field_dw_4_inches_min
+    process:
+      value: value
+
+  field_dw_8_inches_max:
+    plugin: sub_process
+    source: field_dw_8_inches_max
+    process:
+      value: value
+
+  field_dw_8_inches_min:
+    plugin: sub_process
+    source: field_dw_8_inches_min
+    process:
+      value: value
+
+  field_dw_20_inches_max:
+    plugin: sub_process
+    source: field_dw_20_inches_max
+    process:
+      value: value
+
+  field_dw_40_inches_max:
+    plugin: sub_process
+    source: field_dw_40_inches_max
+    process:
+      value: value
+
+  field_dw_end_obs_max:
+    plugin: sub_process
+    source: field_dw_ending_at_obs_max
+    process:
+      value: value
+
+  field_dw_end_obs_min:
+    plugin: sub_process
+    source: field_dw_ending_at_obs_min
+    process:
+      value: value
+
+  field_dw_at_obs_8am:
+    plugin: sub_process
+    source: field_dw_at_observation_8am
+    process:
+      value: value
+
+  field_dw_ground_level_max:
+    plugin: sub_process
+    source: field_dw_ground_level_max
+    process:
+      value: value
+
+  field_dw_ground_level_min:
+    plugin: sub_process
+    source: field_dw_ground_level_min
+    process:
+      value: value
+
+  field_dw_accum_gdd:
+    plugin: sub_process
+    source: field_dw_accum_growing_degree
+    process:
+      value: value
+
+  field_dw_rain:
+    plugin: sub_process
+    source: field_dw_rain_in
+    process:
+      value: value
+
+  field_dw_snow:
+    plugin: sub_process
+    source: field_dw_snow_in
+    process:
+      value: value
+
+  field_dw_snow_depth:
+    plugin: sub_process
+    source: field_snow_depth_in_
+    process:
+      value: value
+
+  field_dw_24_hour_air_move:
+    plugin: sub_process
+    source: field_dw_24_hour_air_movement
+    process:
+      value: value
+
+  field_dw_evaporation:
+    plugin: sub_process
+    source: field_dw_evaporation_in
+    process:
+      value: value
+
+  field_dw_location: field_dw_location
+
+  field_dw_sky: field_sky
+
+  # Path/Pathauto
+  path/pathauto:
+    plugin: default_value
+    default_value: 0
+
+  # Content type
+  type:
+    plugin: default_value
+    default_value: weather_daily_data
+
+  # Domain Access fields
+  field_domain_access:
+    plugin: sub_process
+    source: domain_access_node
+    process:
+      target_id: target_id
+
+  field_domain_all_affiliates:
+    plugin: get
+    source: domain_all_affiliates
+
+  field_domain_source:
+    plugin: get
+    source: domain_source
+
+destination:
+  plugin: 'entity:node'
+  default_bundle: weather_daily_data
+
+migration_dependencies:
+  required:
+    - upgrade_d7_files
+    - upgrade_d7_users_with_roles

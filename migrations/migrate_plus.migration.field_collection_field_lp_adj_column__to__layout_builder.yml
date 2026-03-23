@@ -20,11 +20,22 @@ process:
   info:
     plugin: default_value
     default_value: 'Migrated d7 lp_adjustable_columns item'
-  body:
-    plugin: cas_media_wysiwyg_filter
+  temp_paragraph_image:
+    plugin: get
     source:
-      - field_lp_col_text
-      - field_lp_col_image
+      field_lp_col_image
+  body/value:
+    - plugin: extract
+      source: field_lp_col_text
+      index:
+        - 0
+        - value
+      default: ''
+    - plugin: osu_media_wysiwyg_filter
+    - plugin: cas_paragraph_image
+  body/format:
+    plugin: default_value
+    default_value: 'full_html'
   field_block_serialized_data:
     plugin: cas_adjustable_columns_item
 destination:

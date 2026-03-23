@@ -11,7 +11,7 @@ migration_tags:
   - OSU
   - CAS
 source:
-  plugin: d7_node
+  plugin: d7_node_domain_access
   node_type: paragraph_page
   constants:
     # map paragraph types on pages to their corresponding migration filenames
@@ -72,6 +72,17 @@ process:
   type:
     plugin: default_value
     default_value: page
+  field_domain_access:
+    - plugin: sub_process
+      source: domain_access_node
+      process:
+        target_id: target_id
+  field_domain_all_affiliates:
+    - plugin: get
+      source: domain_all_affiliates
+  field_domain_source:
+    - plugin: get
+      source: domain_source
 destination:
   plugin: 'entity:node'
   bundle: page

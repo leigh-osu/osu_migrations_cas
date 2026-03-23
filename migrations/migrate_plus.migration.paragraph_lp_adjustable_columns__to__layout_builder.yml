@@ -24,8 +24,8 @@ process:
     default_value: 'paragraph_block'
   info:
     source: field_paragraph_label
-#    plugin: default_value
-#    default_value: 'Migrated d7 lp_adjustable_columns section'
+    plugin: default_value
+    default_value: 'Migrated d7 lp_adjustable_columns section'
   field_block_serialized_data:
     plugin: cas_adjustable_columns_section
     source: field_lp_adj_column

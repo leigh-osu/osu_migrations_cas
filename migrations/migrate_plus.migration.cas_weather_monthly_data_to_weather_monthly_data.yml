@@ -1,0 +1,136 @@
+langcode: en
+status: true
+id: cas_weather_monthly_data_to_weather_monthly_data
+label: 'Weather Monthly Data Content Migration'
+migration_group: content
+dependencies: {}
+migration_tags:
+  - Drupal 7
+  - Content
+  - OSU
+  - CAS
+
+source:
+  plugin: d7_node_domain_access
+  node_type: weather_monthly_data
+
+process:
+  nid: nid
+  vid: vid
+  title: title
+  uid: node_uid
+  status: status
+  created: created
+  changed: changed
+  promote: promote
+  sticky: sticky
+
+  body:
+    plugin: sub_process
+    source: body
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      summary: summary
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+
+  field_mw_date:
+    plugin: sub_process
+    source: field_mw_date
+    process:
+      value:
+        plugin: format_date
+        from_format: 'Y-m-d H:i:s'
+        to_format: 'Y-m-d'
+        source: value
+
+  field_mw_location: field_dw_location
+
+  field_mw_evaporation_total: field_evaporation_total
+
+  field_mw_precipitation_total: field_mw_precipitation_total
+
+  field_mw_normal_rain: field_mw_normal_rain
+
+  field_mw_depart_rain: field_mw_departure_rain
+
+  field_mw_average_rain: field_mw_average_rain
+
+  field_mw_snow_total: field_snow_total
+
+  field_mw_normal_ending_at_max: field_mw_normal_ending_at_max
+
+  field_mw_normal_ending_at_min: field_mw_normal_ending_at_min
+
+  field_mw_depart_ending_at_max: field_mw_depart_ending_at_max
+
+  field_mw_depart_ending_at_min: field_mw_depart_ending_at_min
+
+  field_mw_average_ending_at_max: field_mw_average_ending_at_max
+
+  field_mw_average_ending_at_min: field_mw_average_ending_at_min
+
+  field_mw_air_temp_max_mon_max: field_air_temp_max_monthly_maxim
+
+  field_mw_air_temp_max_mon_min: field_air_temp_max_monthly_minim
+
+  field_mw_air_temp_min_mon_max: field_air_temp_min_monthly_maxim
+
+  field_mw_air_temp_min_mon_min: field_air_temp_min_monthly_minim
+
+  field_mw_soil_temp_mean_mon_max: field_soil_temp_mean_monthly_max
+
+  field_mw_soil_temp_mean_mon_min: field_soil_temp_mean_monthly_min
+
+  field_mw_soil_temp_max_mon_max: field_soil_temp_max_monthly_maxi
+
+  field_mw_soil_temp_max_mon_min: field_soil_temp_max_monthly_mini
+
+  field_mw_soil_temp_min_mon_max: field_soil_temp_min_monthly_maxi
+
+  field_mw_soil_temp_min_mon_min: field_soil_temp_min_monthly_mini
+
+  field_mw_gdd_monthly_total: field_gdd_monthly_total
+
+  field_mw_gdd_monthly_25_year_avg: field_gdd_monthly_25_year_avg
+
+  field_mw_gdd_yearly_accumulation: field_gdd_yearly_accumulation
+
+  field_mw_gdd_yearly_25_year_avg: field_gdd_yearly_25_year_avg
+
+  # Path/Pathauto
+  path/pathauto:
+    plugin: default_value
+    default_value: 0
+
+  # Content type
+  type:
+    plugin: default_value
+    default_value: weather_monthly_data
+
+  # Domain Access fields
+  field_domain_access:
+    plugin: sub_process
+    source: domain_access_node
+    process:
+      target_id: target_id
+
+  field_domain_all_affiliates:
+    plugin: get
+    source: domain_all_affiliates
+
+  field_domain_source:
+    plugin: get
+    source: domain_source
+
+destination:
+  plugin: 'entity:node'
+  default_bundle: weather_daily_data
+
+migration_dependencies:
+  required:
+    - upgrade_d7_files
+    - upgrade_d7_users_with_roles

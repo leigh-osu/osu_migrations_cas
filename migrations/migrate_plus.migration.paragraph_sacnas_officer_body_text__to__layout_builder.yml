@@ -1,4 +1,4 @@
-id: paragraph_sacnas_officer_body_text_left__to__layout_builder
+id: paragraph_sacnas_officer_body_text__to__layout_builder
 label: Drupal 7 sacnas_officer_body_text Paragraphs
 migration_group: paragraphs_to_layout_builder
 dependencies:
@@ -22,22 +22,27 @@ process:
   type:
     plugin: default_value
     default_value: 'paragraph_block'
-  body:
-    - plugin: sub_process
+  temp_paragraph_image:
+    plugin: get
+    source: field_officer_image
+  body/value:
+    - plugin: extract
       source: field_body_text
-      process:
-        value:
-          plugin: osu_media_wysiwyg_filter
-          source: value
-        format:
-          plugin: default_value
-          default_value: 'full_html'
-  info:
+      index:
+        - 0
+        - value
+      default: ''
+    - plugin: osu_media_wysiwyg_filter
+    - plugin: cas_paragraph_image
+  body/format:
     plugin: default_value
-    default_value: 'Migrated d7 paragraph sacnas_officer_body_text_left'
-  reusable:
-    plugin: default_value
-    default_value: 0
+    default_value: 'full_html'
+info:
+  plugin: default_value
+  default_value: 'Migrated d7 paragraph sacnas_officer_body_text_left'
+reusable:
+  plugin: default_value
+  default_value: 0
 
 destination:
   plugin: entity:block_content
