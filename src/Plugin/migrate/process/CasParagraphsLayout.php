@@ -83,10 +83,6 @@ class CasParagraphsLayout extends CasLayoutBase {
             $migration_ids[$map['paragraph_2_column_8_4_left']] = "blb_region_col_1";
             $migration_ids[$map['paragraph_2_column_8_4_right']] = "blb_region_col_2";
           }
-          elseif ($type == "sacnas_officer_body_text") {
-            $migration_ids[$map['sacnas_officer_body_text_left']] = "blb_region_col_1";
-            $migration_ids[$map['sacnas_officer_body_text_right']] = "blb_region_col_2";
-          }
           elseif ($type == "paragraph_3_col") {
             $migration_ids[$map['paragraph_3_col_left']] = "blb_region_col_1";
             $migration_ids[$map['paragraph_3_col_center']] = "blb_region_col_2";
