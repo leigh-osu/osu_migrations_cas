@@ -6,13 +6,16 @@ migration_tags:
   - Field Collection Content
   - OSU Paragraphs
   - OSU
-  - CAS Paragraphs
+  - CAS field collections
   - CAS
 #deriver: Drupal\paragraphs\Plugin\migrate\D7FieldCollectionItemDeriver
 source:
   plugin: d7_field_collection_item
   field_name: field_lp_picbox
   bundle: group
+  high_water_property:
+    name: revision_id
+
 process:
   type:
     plugin: default_value

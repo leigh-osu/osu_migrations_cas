@@ -10,11 +10,14 @@ migration_tags:
   - Layout content
   - OSU
   - CAS
+  - CAS Content
 source:
   plugin: d7_node_domain_access
   node_type: 150_species
+  high_water_property:
+    name: changed
+
 process:
-  # Title
   title: title
 
   # Body field

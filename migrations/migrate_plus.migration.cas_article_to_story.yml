@@ -1,0 +1,301 @@
+langcode: en
+status: true
+id: cas_article_to_story
+label: 'Basic Article to Story Content Migration'
+migration_group: content
+dependencies: { }
+migration_tags:
+  - Drupal 7
+  - Content
+  - Layout content
+  - OSU
+  - CAS
+  - CAS content
+
+source:
+  plugin: d7_node_domain_access
+  node_type: article
+  high_water_property:
+    name: changed
+
+process:
+
+  body:
+    - plugin: sub_process
+      source: body
+      process:
+        value:
+          plugin: osu_media_wysiwyg_filter
+          source: value
+        summary: summary
+        format:
+          plugin: default_value
+          default_value: 'full_html'
+
+  field_osu_story_cover_image:
+    plugin: sub_process
+    source: field_image
+    process:
+      target_id:
+        plugin: migration_lookup
+        migration: upgrade_d7_media_images
+        source: fid
+
+  field_story_media:
+    plugin: sub_process
+    source: field_file_attachment
+    process:
+      target_id:
+        - plugin: migration_lookup
+          no_stub: true
+          migration:
+            - upgrade_d7_media_documents
+            - upgrade_d7_media_images
+            - upgrade_d7_media_audio
+            - upgrade_d7_media_kaltura
+          source: fid
+        - plugin: skip_on_empty
+          method: row
+
+  field_story_osu_story:
+    plugin: default_value
+    source: field_osu_story
+    default_value: 0
+
+  field_story_publish_date:
+    plugin: sub_process
+    source: publish_date
+    process:
+      value:
+        plugin: format_date
+        from_format: 'Y-m-d H:i:s'
+        to_format: 'Y-m-d'
+        source: value
+
+  field_osu_story_external_url:
+    plugin: sub_process
+    source: field_news_source
+    process:
+      uri: url
+      title: title
+
+  field_story_osu_employee:
+    plugin: sub_process
+    source: field_osu_employee
+    process:
+      target_id:
+        plugin: migration_lookup
+        migration: upgrade_d7_users_with_roles
+        source: target_id
+
+  field_story_category:
+    plugin: get
+    source: field_category
+
+  # Taxonomies
+  field_tags:
+    plugin: sub_process
+    source: field_tags
+    process:
+      target_id:
+        plugin: migration_lookup
+        migration: upgrade_d7_taxonomy_terms:tags
+        source: tid
+
+  field_tax_publisher:
+    plugin: sub_process
+    source: field_publisher
+    process:
+      target_id:
+        plugin: migration_lookup
+        migration: upgrade_d7_taxonomy_terms:publisher
+        source: tid
+
+  field_tax_cas_themes:
+    plugin: sub_process
+    source: field_cas_themes
+    process:
+      target_id:
+        plugin: migration_lookup
+        migration: upgrade_d7_taxonomy_terms:cas_impact_areas
+        source: tid
+
+  field_tax_cas_section:
+    plugin: sub_process
+    source: field_cas_section
+    process:
+      target_id:
+        plugin: migration_lookup
+        migration: upgrade_d7_taxonomy_terms:type
+        source: tid
+
+  field_tax_department:
+    plugin: sub_process
+    source: field_department
+    process:
+      target_id:
+        plugin: migration_lookup
+        migration: upgrade_d7_taxonomy_terms:unit
+        source: tid
+
+  field_tax_publication_type:
+    plugin: sub_process
+    source: field_publication_type_tag
+    process:
+      target_id:
+        plugin: migration_lookup
+        migration: upgrade_d7_taxonomy_terms:publication_type
+        source: tid
+
+  field_tax_crop:
+    plugin: sub_process
+    source: field_crop_tags
+    process:
+      target_id:
+        plugin: migration_lookup
+        migration: upgrade_d7_taxonomy_terms:crop
+        source: tid
+
+  field_tax_coarec_authors:
+    plugin: sub_process
+    source: field_coarec_authors
+    process:
+      target_id:
+        plugin: migration_lookup
+        migration: upgrade_d7_taxonomy_terms:coarec_authors
+        source: tid
+
+  field_tax_coarec_topics:
+    plugin: sub_process
+    source: field_coarec_topics
+    process:
+      target_id:
+        plugin: migration_lookup
+        migration: upgrade_d7_taxonomy_terms:coarec_topics
+        source: tid
+
+  field_tax_malheur_topics:
+    plugin: sub_process
+    source: field_malheur_topics
+    process:
+      target_id:
+        plugin: migration_lookup
+        migration: upgrade_d7_taxonomy_terms:malheur_topics
+        source: tid
+
+  field_tax_nursery_topics:
+    plugin: sub_process
+    source: field_nursery_tags
+    process:
+      target_id:
+        plugin: migration_lookup
+        migration: upgrade_d7_taxonomy_terms:nursery
+        source: tid
+
+  field_tax_organic_ag_topics:
+    plugin: sub_process
+    source: field_organic_ag_topics
+    process:
+      target_id:
+        plugin: migration_lookup
+        migration: upgrade_d7_taxonomy_terms:organic_ag
+        source: tid
+
+  field_tax_owri_topics:
+    plugin: sub_process
+    source: field_owri_tags
+    process:
+      target_id:
+        plugin: migration_lookup
+        migration: upgrade_d7_taxonomy_terms:owri
+        source: tid
+
+  field_tax_swd_topics:
+    plugin: sub_process
+    source: field_swd_tags
+    process:
+      target_id:
+        plugin: migration_lookup
+        migration: upgrade_d7_taxonomy_terms:swd
+        source: tid
+
+  field_tax_turf_topics:
+    plugin: sub_process
+    source: field_turf_tags
+    process:
+      target_id:
+        plugin: migration_lookup
+        migration: upgrade_d7_taxonomy_terms:turf
+        source: tid
+
+  field_tax_vegetable_topics:
+    plugin: sub_process
+    source: field_veg_tags
+    process:
+      target_id:
+        plugin: migration_lookup
+        migration: upgrade_d7_taxonomy_terms:veg
+        source: tid
+
+  field_tax_work_area:
+    plugin: sub_process
+    source: field_work_area_tags
+    process:
+      target_id:
+        plugin: migration_lookup
+        migration: upgrade_d7_taxonomy_terms:work_areas
+        source: tid
+
+  field_tax_year:
+    plugin: sub_process
+    source: field_article_year
+    process:
+      target_id:
+        plugin: migration_lookup
+        migration: upgrade_d7_taxonomy_terms:year
+        source: tid
+
+
+  field_meta_tags:
+    - plugin: d7_metatag_entities
+      source: pseudo_metatag_entities
+
+  path/pathauto:
+    plugin: default_value
+    default_value: 0
+
+  type:
+    plugin: default_value
+    default_value: story
+
+  field_domain_access:
+    - plugin: sub_process
+      source: domain_access_node
+      process:
+        target_id: target_id
+  field_domain_all_affiliates:
+    - plugin: get
+      source: domain_all_affiliates
+  field_domain_source:
+    - plugin: get
+      source: domain_source
+
+destination:
+  plugin: 'entity:node'
+  bundle: story
+
+migration_dependencies:
+  required:
+    - upgrade_d7_files
+    - upgrade_d7_users_with_roles
+    - upgrade_d7_taxonomy_terms:tags
+    - upgrade_d7_taxonomy_terms:publication_type
+    - upgrade_d7_taxonomy_terms:turf
+    - upgrade_d7_media_audio
+    - upgrade_d7_media_images
+    - upgrade_d7_media_documents
+    - upgrade_d7_media_kaltura
+
+  optional:
+    - upgrade_d7_media_local_video
+    - upgrade_d7_media_remote_video

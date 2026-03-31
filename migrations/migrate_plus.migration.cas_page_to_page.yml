@@ -10,9 +10,13 @@ migration_tags:
   - Layout content
   - OSU
   - CAS
+  - CAS content
 source:
   plugin: d7_node_domain_access
   node_type: page
+  high_water_property:
+    name:
+
   constants:
     # map paragraph types on pages to their corresponding migration filenames
     map:

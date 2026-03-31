@@ -14,10 +14,14 @@ migration_tags:
   - OSU
   - CAS Paragraphs
   - CAS
+
 source:
   plugin: d7_paragraphs_item
   bundle: 2_column_4_8
   key: migrate
+  high_water_property:
+    name: revision_id
+
 process:
   type:
     plugin: default_value

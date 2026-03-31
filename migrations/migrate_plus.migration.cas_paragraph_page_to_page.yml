@@ -10,9 +10,12 @@ migration_tags:
   - Layout content
   - OSU
   - CAS
+  - CAS Content
 source:
   plugin: d7_node_domain_access
   node_type: paragraph_page
+  high_water_property:
+    name: changed
   constants:
     # map paragraph types on pages to their corresponding migration filenames
     map:
@@ -41,6 +44,7 @@ source:
       lp_picbox_grid: 'paragraph_lp_picbox_grid__to__layout_builder'
       lp_adjustable_columns: 'paragraph_lp_adjustable_columns__to__layout_builder'
 process:
+
   body:
     - plugin: sub_process
       source: body
@@ -52,26 +56,33 @@ process:
         format:
           plugin: default_value
           default_value: 'full_html'
+
   field_meta_tags:
     - plugin: d7_metatag_entities
       source: pseudo_metatag_entities
+
   path/pathauto:
     plugin: default_value
     default_value: 0
+
   default_temp:
     plugin: default_layout
     bundle: page
+
   paragraphs_temp:
     plugin: cas_paragraphs_layout
     source_field: field_larch_paragraph_sections
+
   layout_builder__layout:
     plugin: get
     source:
       - '@paragraphs_temp'
       - '@default_temp'
+
   type:
     plugin: default_value
     default_value: page
+
   field_domain_access:
     - plugin: sub_process
       source: domain_access_node
@@ -83,9 +94,11 @@ process:
   field_domain_source:
     - plugin: get
       source: domain_source
+
 destination:
   plugin: 'entity:node'
   bundle: page
+
 migration_dependencies:
   required:
     - upgrade_d7_files

@@ -18,6 +18,9 @@ source:
   plugin: d7_paragraphs_item
   bundle: lp_picbox_grid
   key: migrate
+  high_water_property:
+    name: revision_id
+
 process:
   type:
     plugin: default_value

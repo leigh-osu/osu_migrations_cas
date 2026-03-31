@@ -9,10 +9,13 @@ migration_tags:
   - Content
   - OSU
   - CAS
+  - CAS content
 
 source:
   plugin: d7_node_domain_access
   node_type: weather_daily_data
+  high_water_property:
+    name: changed
 
 process:
   nid: nid

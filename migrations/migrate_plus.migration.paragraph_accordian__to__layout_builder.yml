@@ -19,6 +19,9 @@ source:
   plugin: d7_paragraphs_item
   bundle: accordian
   key: migrate
+  high_water_property:
+    name: revision_id
+
 process:
   type:
     plugin: default_value
