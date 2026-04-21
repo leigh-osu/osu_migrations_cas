@@ -1,6 +1,6 @@
 langcode: en
 status: true
-id: cas_weather_data_to_weather_data
+id: cas_weather_data_to_weather_daily_data
 label: 'Weather Data Content Migration'
 migration_group: content
 dependencies: {}
@@ -40,7 +40,7 @@ process:
         plugin: default_value
         default_value: 'full_html'
 
-  field_w_date:
+  field_dw_date:
     plugin: sub_process
     source: field_date
     process:
@@ -50,113 +50,170 @@ process:
         to_format: 'Y-m-d'
         source: value
 
-  field_w_end_obs_max:
+  field_dw_location:
+    plugin: default_value
+    default_value: hyslop
+
+  field_dw_end_obs_max:
     plugin: sub_process
     source: field_ending_at_observaton_max
     process:
-      value: value
+      value:
+        plugin: callback
+        callable: intval
+        source: value
 
-  field_w_end_obs_min:
+  field_dw_end_obs_min:
     plugin: sub_process
     source: field_ending_at_observaton_min
     process:
-      value: value
-
-  field_w_at_obs_8am:
+      value:
+        plugin: callback
+        callable: intval
+        source: value
+  field_dw_at_obs_8am:
     plugin: sub_process
     source: field_at_observation_8am
     process:
-      value: value
+      value:
+        plugin: callback
+        callable: intval
+        source: value
 
-  field_w_ground_level_max:
+  field_dw_ground_level_max:
     plugin: sub_process
     source: field_ground_level_max
     process:
-      value: value
+      value:
+        plugin: callback
+        callable: intval
+        source: value
 
-  field_w_ground_level_min:
+  field_dw_ground_level_min:
     plugin: sub_process
     source: field_ground_level_min
     process:
-      value: value
+      value:
+        plugin: callback
+        callable: intval
+        source: value
 
-  field_w_2_inches_max:
+  field_dw_2_inches_max:
     plugin: sub_process
     source: field_2_inches_max
     process:
-      value: value
+      value:
+        plugin: callback
+        callable: intval
+        source: value
 
-  field_w_2_inches_min:
+  field_dw_2_inches_min:
     plugin: sub_process
     source: field_2_inches_min
     process:
-      value: value
+      value:
+        plugin: callback
+        callable: intval
+        source: value
 
-  field_w_4_inches_max:
+  field_dw_4_inches_max:
     plugin: sub_process
     source: field_4_inches_max
     process:
-      value: value
+      value:
+        plugin: callback
+        callable: intval
+        source: value
 
-  field_w_4_inches_min:
+  field_dw_4_inches_min:
     plugin: sub_process
     source: field_4_inches_min
     process:
-      value: value
+      value:
+        plugin: callback
+        callable: intval
+        source: value
 
-  field_w_8_inches_max:
+  field_dw_8_inches_max:
     plugin: sub_process
     source: field_8_inches_max
     process:
-      value: value
+      value:
+        plugin: callback
+        callable: intval
+        source: value
 
-  field_w_8_inches_min:
+  field_dw_8_inches_min:
     plugin: sub_process
     source: field_8_inches_min
     process:
-      value: value
+      value:
+        plugin: callback
+        callable: intval
+        source: value
 
-  field_w_20_inches_max:
+  field_dw_20_inches_max:
     plugin: sub_process
     source: field_20_inches_max
     process:
-      value: value
+      value:
+        plugin: callback
+        callable: intval
+        source: value
 
-  field_w_40_inches_max:
+  field_dw_40_inches_max:
     plugin: sub_process
     source: field_40_inches_max
     process:
-      value: value
+      value:
+        plugin: callback
+        callable: intval
+        source: value
 
-  field_w_accum_gdd:
+  field_dw_accum_gdd:
     plugin: sub_process
     source: field_accumulated_growing_degree
     process:
-      value: value
+      value:
+        plugin: callback
+        callable: intval
+        source: value
 
-  field_w_rain:
+  field_dw_rain:
     plugin: sub_process
     source: field_rain
     process:
-      value: value
+      value:
+        plugin: callback
+        callable: floatval
+        source: value
 
-  field_w_snow:
+  field_dw_snow:
     plugin: sub_process
     source: field__snow
     process:
-      value: value
+      value:
+        plugin: callback
+        callable: floatval
+        source: value
 
-  field_w_24h_air_move:
+  field_dw_24_hour_air_move:
     plugin: sub_process
     source: field_24_hour_air_movement_
     process:
-      value: value
+      value:
+        plugin: callback
+        callable: intval
+        source: value
 
-  field_w_evaporation:
+  field_dw_evaporation:
     plugin: sub_process
     source: field_evaporation_in
     process:
-      value: value
+      value:
+        plugin: callback
+        callable: floatval
+        source: value
 
   # Path/Pathauto
   path/pathauto:
@@ -166,7 +223,7 @@ process:
   # Content type
   type:
     plugin: default_value
-    default_value: weather_data
+    default_value: weather_daily_data
 
   # Domain Access fields
   field_domain_access:
@@ -185,7 +242,7 @@ process:
 
 destination:
   plugin: 'entity:node'
-  default_bundle: weather_data
+  default_bundle: weather_daily_data
 
 migration_dependencies:
   required:

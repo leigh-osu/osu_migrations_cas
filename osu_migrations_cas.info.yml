@@ -7,3 +7,4 @@ core_version_requirement: ^10 || ^11
 dependencies:
   - osu_migrations:osu_migrations
   - osu_migrations:og_to_group
+  - osu_migrations:osu_user_accounts
