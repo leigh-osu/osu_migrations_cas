@@ -1,0 +1,111 @@
+langcode: en
+status: true
+id: cas_image_album_to_image_album
+label: 'Basic Image Album to Image Album Migration'
+migration_group: content
+dependencies: {  }
+migration_tags:
+  - Drupal 7
+  - Content
+  - Layout content
+  - OSU
+  - CAS
+  - CAS Content
+source:
+  plugin: d7_node_domain_access
+  node_type: image_album
+  high_water_property:
+    name: changed
+
+process:
+  title: title
+
+  # Body field. D7 image_album had no body field; the description content lives
+  # in field_album_description (text_long). Map it into the D10 body.
+  body:
+    plugin: sub_process
+    source: field_album_description
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+
+  # Multi image field (D7 image -> D10 media:image)
+  field_image_album_images:
+    plugin: sub_process
+    source: field_album_image
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_media_images
+          source: fid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+
+  # User reference (D7 entityreference:user -> D10 entity_reference:user, multi)
+  field_image_album_show_profile:
+    plugin: sub_process
+    source: field_show_on_profile
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_users_with_roles
+          source: target_id
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+
+  # NOTE: D7 viewfield fields (field_album_categories, field_album_view,
+  # field_image_creator_owners) have no D10 equivalent and are skipped.
+
+  # Meta tags
+  field_meta_tags:
+    plugin: d7_metatag_entities
+    source: pseudo_metatag_entities
+
+  # Path settings
+  path/pathauto:
+    plugin: default_value
+    default_value: 0
+
+  # Content type
+  type:
+    plugin: default_value
+    default_value: image_album
+
+  # Domain access fields
+  field_domain_access:
+    plugin: sub_process
+    source: domain_access_node
+    process:
+      target_id: target_id
+
+  field_domain_all_affiliates:
+    plugin: get
+    source: domain_all_affiliates
+
+  field_domain_source:
+    plugin: get
+    source: domain_source
+
+  # Standard node fields
+  uid: node_uid
+  status: status
+  created: created
+  changed: changed
+  promote: promote
+  sticky: sticky
+
+destination:
+  plugin: 'entity:node'
+  default_bundle: image_album
+
+migration_dependencies:
+  required:
+    - upgrade_d7_files
+    - upgrade_d7_users_with_roles
+    - upgrade_d7_media_images

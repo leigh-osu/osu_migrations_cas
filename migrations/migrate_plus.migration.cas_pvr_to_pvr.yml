@@ -1,0 +1,313 @@
+langcode: en
+status: true
+id: cas_pvr_to_pvr
+label: 'Basic Plant Variety Release to PVR Migration'
+migration_group: content
+dependencies: {  }
+migration_tags:
+  - Drupal 7
+  - Content
+  - Layout content
+  - OSU
+  - CAS
+  - CAS Content
+source:
+  plugin: d7_node_domain_access
+  node_type: plant_variety_release
+  high_water_property:
+    name: changed
+
+process:
+  title: title
+
+  # Body field
+  body:
+    plugin: sub_process
+    source: body
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      summary: summary
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+
+  # String fields (D7 text -> D10 string)
+  field_pvr_genus:
+    plugin: get
+    source: field_genus
+  field_pvr_species:
+    plugin: get
+    source: field_species
+  field_pvr_pedigree:
+    plugin: get
+    source: field_pedigree
+  field_pvr_summary:
+    plugin: get
+    source: field_summary
+  field_pvr_hops_alpha_acids:
+    plugin: get
+    source: field_alpha_acids
+  field_pvr_hops_availability:
+    plugin: get
+    source: field_availability
+  field_pvr_hops_beta_acids:
+    plugin: get
+    source: field_beta_acids
+  field_pvr_hops_cohumulone:
+    plugin: get
+    source: field_cohumulone
+  field_pvr_hops_date_received:
+    plugin: get
+    source: field_date_recieved
+  field_pvr_hops_leaf_color:
+    plugin: get
+    source: field_leaf_color
+  field_pvr_hops_maturity:
+    plugin: get
+    source: field_maturity
+  field_pvr_hops_method_received:
+    plugin: get
+    source: field_method_received
+  field_pvr_hops_oil:
+    plugin: get
+    source: field_oil
+  field_pvr_hops_origin:
+    plugin: get
+    source: field_origin
+  field_pvr_hops_sex:
+    plugin: get
+    source: field_sex
+  field_pvr_hops_sidearm_length:
+    plugin: get
+    source: field_sidearm_length
+  field_pvr_hops_storage_stability:
+    plugin: get
+    source: field_storage_stability
+  field_pvr_hops_usda_acc:
+    plugin: get
+    source: field_usda_accession_no_
+  field_pvr_hops_vigor:
+    plugin: get
+    source: field_vigor
+
+  # Text long fields
+  field_pvr_contact_for_breeder:
+    plugin: sub_process
+    source: field_contact_for_breeder
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+  field_pvr_major_traits:
+    plugin: sub_process
+    source: field_major_traits
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+  field_pvr_other_information:
+    plugin: sub_process
+    source: field_other_information
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+  field_pvr_benefits:
+    plugin: sub_process
+    source: field_pvr_benefits
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+  field_pvr_characteristics:
+    plugin: sub_process
+    source: field_pvr_characteristics
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+  field_pvr_yield:
+    plugin: sub_process
+    source: field_yield
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+  field_pvr_hops_primary_site:
+    plugin: sub_process
+    source: field_primary_site
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+  field_pvr_hops_references:
+    plugin: sub_process
+    source: field_references
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+  field_pvr_hops_selection:
+    plugin: sub_process
+    source: field_selection
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+
+  # Datetime fields (D7 datetime 'Y-m-d H:i:s' -> D10 date 'Y-m-d')
+  field_pvr_date_of_release:
+    plugin: sub_process
+    source: field_date_of_release
+    process:
+      value:
+        plugin: format_date
+        from_format: 'Y-m-d H:i:s'
+        to_format: 'Y-m-d'
+        source: value
+  field_pvr_date_of_pvp:
+    plugin: sub_process
+    source: field_date_of_pvp
+    process:
+      value:
+        plugin: format_date
+        from_format: 'Y-m-d H:i:s'
+        to_format: 'Y-m-d'
+        source: value
+
+  # Image fields (D7 image -> D10 media:image)
+  field_pvr_image:
+    plugin: sub_process
+    source: field_image
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_media_images
+          source: fid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+  field_pvr_banner_picture:
+    plugin: sub_process
+    source: field_picture
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_media_images
+          source: fid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+  field_pvr_disease_resistance:
+    plugin: sub_process
+    source: field_disease_resistance
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_media_images
+          source: fid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+  field_pvr_region:
+    plugin: sub_process
+    source: field_region
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_media_images
+          source: fid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+
+  # Taxonomy: D7 field_classification (vocab plant_variety_classification) -> D10 field_tax_classification
+  field_tax_classification:
+    plugin: sub_process
+    source: field_classification
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_taxonomy_terms:plant_variety_classification
+          source: tid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+
+  # Meta tags
+  field_meta_tags:
+    plugin: d7_metatag_entities
+    source: pseudo_metatag_entities
+
+  # Path settings
+  path/pathauto:
+    plugin: default_value
+    default_value: 0
+
+  # Content type
+  type:
+    plugin: default_value
+    default_value: plant_variety_release
+
+  # Domain access fields
+  field_domain_access:
+    plugin: sub_process
+    source: domain_access_node
+    process:
+      target_id: target_id
+
+  field_domain_all_affiliates:
+    plugin: get
+    source: domain_all_affiliates
+
+  field_domain_source:
+    plugin: get
+    source: domain_source
+
+  # Standard node fields
+  uid: node_uid
+  status: status
+  created: created
+  changed: changed
+  promote: promote
+  sticky: sticky
+
+destination:
+  plugin: 'entity:node'
+  default_bundle: plant_variety_release
+
+migration_dependencies:
+  required:
+    - upgrade_d7_files
+    - upgrade_d7_users_with_roles
+    - upgrade_d7_media_images
+    - upgrade_d7_taxonomy_terms:plant_variety_classification

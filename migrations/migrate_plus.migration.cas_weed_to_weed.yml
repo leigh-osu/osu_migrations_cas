@@ -1,0 +1,315 @@
+langcode: en
+status: true
+id: cas_weed_to_weed
+label: 'Basic Weed to Weed Migration'
+migration_group: content
+dependencies: {  }
+migration_tags:
+  - Drupal 7
+  - Content
+  - Layout content
+  - OSU
+  - CAS
+  - CAS Content
+source:
+  plugin: d7_node_domain_access
+  node_type: weed
+  high_water_property:
+    name: changed
+
+process:
+  title: title
+
+  # Body field
+  body:
+    plugin: sub_process
+    source: body
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      summary: summary
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+
+  # String fields
+  field_weed_common_name:
+    plugin: get
+    source: field_common_name
+  field_weed_latin_name:
+    plugin: get
+    source: field_latin_name
+  field_weed_family:
+    plugin: get
+    source: field_family
+
+  # List string field (allowed values match between D7 and D10)
+  field_weed_plant_status:
+    plugin: get
+    source: field_plant_status
+
+  # Text long fields (value + format)
+  field_weed_brief_description:
+    plugin: sub_process
+    source: field_brief_description
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+  field_weed_physical_description:
+    plugin: sub_process
+    source: field_plant_physical_description
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+  field_weed_control_description:
+    plugin: sub_process
+    source: field_control_description
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+  field_weed_habit:
+    plugin: sub_process
+    source: field_habit
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+  field_weed_cotyledon_or_seedling:
+    plugin: sub_process
+    source: field_cotyledon_or_seedlings
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+  field_weed_rosette:
+    plugin: sub_process
+    source: field_rosette
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+  field_weed_foliage:
+    plugin: sub_process
+    source: field_foliage
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+  field_weed_stem:
+    plugin: sub_process
+    source: field_plant_stem
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+  field_weed_roots:
+    plugin: sub_process
+    source: field_plant_roots
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+  field_weed_flowers:
+    plugin: sub_process
+    source: field_flowers
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+  field_weed_seed_or_seed_pods:
+    plugin: sub_process
+    source: field_seed_or_seed_pods
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+  field_weed_dissemination:
+    plugin: sub_process
+    source: field_dissemination
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+  field_weed_favorable_environment:
+    plugin: sub_process
+    source: field_favorable_environments
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+  field_weed_favorable_env_note:
+    plugin: sub_process
+    source: field_favorable_environment_note
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+  field_weed_look_alikes:
+    plugin: sub_process
+    source: field_plant_look_alikes
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+  field_weed_bittercress_and_aphid:
+    plugin: sub_process
+    source: field_bittercress_and_aphids
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+  field_weed_of_interest:
+    plugin: sub_process
+    source: field_of_interest
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+  field_weed_literature_cited:
+    plugin: sub_process
+    source: field_literature_cited
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+
+  # Link field (link_field -> link). url->uri, title->title.
+  field_weed_management_link:
+    plugin: sub_process
+    source: field_plant_management_link
+    process:
+      uri: url
+      title: title
+
+  # Image field (D7 image -> D10 media:image)
+  field_weed_image:
+    plugin: sub_process
+    source: field_plant_images
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_media_images
+          source: fid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+
+  # Taxonomy: D7 field_life_cycle (vocab plant_life_cycle) -> D10 field_tax_life_cycle
+  field_tax_life_cycle:
+    plugin: sub_process
+    source: field_life_cycle
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_taxonomy_terms:plant_life_cycle
+          source: tid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+
+  # Meta tags
+  field_meta_tags:
+    plugin: d7_metatag_entities
+    source: pseudo_metatag_entities
+
+  # Path settings
+  path/pathauto:
+    plugin: default_value
+    default_value: 0
+
+  # Content type
+  type:
+    plugin: default_value
+    default_value: weed
+
+  # Domain access fields
+  field_domain_access:
+    plugin: sub_process
+    source: domain_access_node
+    process:
+      target_id: target_id
+
+  field_domain_all_affiliates:
+    plugin: get
+    source: domain_all_affiliates
+
+  field_domain_source:
+    plugin: get
+    source: domain_source
+
+  # Standard node fields
+  uid: node_uid
+  status: status
+  created: created
+  changed: changed
+  promote: promote
+  sticky: sticky
+
+destination:
+  plugin: 'entity:node'
+  default_bundle: weed
+
+migration_dependencies:
+  required:
+    - upgrade_d7_files
+    - upgrade_d7_users_with_roles
+    - upgrade_d7_taxonomy_terms:plant_life_cycle
+    - upgrade_d7_media_images

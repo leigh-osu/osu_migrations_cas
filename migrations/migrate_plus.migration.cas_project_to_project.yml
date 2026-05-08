@@ -1,0 +1,359 @@
+langcode: en
+status: true
+id: cas_project_to_project
+label: 'Basic Project to Project Migration'
+migration_group: content
+dependencies: {  }
+migration_tags:
+  - Drupal 7
+  - Content
+  - Layout content
+  - OSU
+  - CAS
+  - CAS Content
+source:
+  plugin: d7_node_domain_access
+  node_type: project
+  high_water_property:
+    name: changed
+
+process:
+  title: title
+
+  # Body field
+  body:
+    plugin: sub_process
+    source: body
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      summary: summary
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+
+  # Integer fields
+  field_project_start_year:
+    plugin: get
+    source: field_start_year
+  field_project_end_year:
+    plugin: get
+    source: field_end_year
+
+  # Boolean field (D7 list_boolean 0/1 -> D10 boolean)
+  field_project_status:
+    plugin: get
+    source: field_status
+
+  # Text long fields
+  field_project_funding_source:
+    plugin: sub_process
+    source: field_funding_source
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+  field_project_impacts:
+    plugin: sub_process
+    source: field_impacts
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+  field_project_key_activities:
+    plugin: sub_process
+    source: field_key_activities
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+  field_project_literature:
+    plugin: sub_process
+    source: field_literature
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+  field_project_objectives:
+    plugin: sub_process
+    source: field_project_objectives
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+  field_project_outputs:
+    plugin: sub_process
+    source: field_project_outputs
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+  field_project_partners:
+    plugin: sub_process
+    source: field_project_partners
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+
+  # Link field
+  field_project_website:
+    plugin: sub_process
+    source: field_website
+    process:
+      uri: url
+      title: title
+
+  # User reference fields (D7 user_reference -> D10 entity_reference:user)
+  field_project_leader:
+    plugin: sub_process
+    source: field_project_leader_s_
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_users_with_roles
+          source: uid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+  field_project_member:
+    plugin: sub_process
+    source: field_project_member_s_
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_users_with_roles
+          source: uid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+
+  # Image fields (D7 image -> D10 media:image)
+  field_project_image:
+    plugin: sub_process
+    source: field_picture
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_media_images
+          source: fid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+  field_project_thumbnail:
+    plugin: sub_process
+    source: field_thumbnail
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_media_images
+          source: fid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+
+  # File field (D7 file -> D10 media:document)
+  field_project_media:
+    plugin: sub_process
+    source: field_media
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_media_documents
+          source: fid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+
+  # Taxonomy references
+  field_tax_cbarc:
+    plugin: sub_process
+    source: field_cbarc_topics
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_taxonomy_terms:cbarc
+          source: tid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+  field_tax_focus_area:
+    plugin: sub_process
+    source: field_focus_area
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_taxonomy_terms:focus_area
+          source: tid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+  field_tax_fwcs_topics:
+    plugin: sub_process
+    source: field_fwcs_topics
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_taxonomy_terms:fwcs
+          source: tid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+  field_tax_nursery_topics:
+    plugin: sub_process
+    source: field_nursery_tags
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_taxonomy_terms:nursery
+          source: tid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+  field_tax_organic_ag_topics:
+    plugin: sub_process
+    source: field_organic_ag_topics
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_taxonomy_terms:organic_ag
+          source: tid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+  field_tax_owri_topics:
+    plugin: sub_process
+    source: field_owri_tags
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_taxonomy_terms:owri
+          source: tid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+  field_tax_swd_topics:
+    plugin: sub_process
+    source: field_swd_tags
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_taxonomy_terms:swd
+          source: tid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+  field_tax_turf_topics:
+    plugin: sub_process
+    source: field_turf_tags
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_taxonomy_terms:turf
+          source: tid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+  field_tax_veg_topics:
+    plugin: sub_process
+    source: field_veg_tags
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_taxonomy_terms:veg
+          source: tid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+  field_tax_work_area:
+    plugin: sub_process
+    source: field_work_area_tags
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_taxonomy_terms:work_areas
+          source: tid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+
+  # Meta tags
+  field_meta_tags:
+    plugin: d7_metatag_entities
+    source: pseudo_metatag_entities
+
+  # Path settings
+  path/pathauto:
+    plugin: default_value
+    default_value: 0
+
+  # Content type
+  type:
+    plugin: default_value
+    default_value: project
+
+  # Domain access fields
+  field_domain_access:
+    plugin: sub_process
+    source: domain_access_node
+    process:
+      target_id: target_id
+
+  field_domain_all_affiliates:
+    plugin: get
+    source: domain_all_affiliates
+
+  field_domain_source:
+    plugin: get
+    source: domain_source
+
+  # Standard node fields
+  uid: node_uid
+  status: status
+  created: created
+  changed: changed
+  promote: promote
+  sticky: sticky
+
+destination:
+  plugin: 'entity:node'
+  default_bundle: project
+
+migration_dependencies:
+  required:
+    - upgrade_d7_files
+    - upgrade_d7_users_with_roles
+    - upgrade_d7_media_images
+    - upgrade_d7_media_documents
+    - upgrade_d7_taxonomy_terms:cbarc
+    - upgrade_d7_taxonomy_terms:focus_area
+    - upgrade_d7_taxonomy_terms:fwcs
+    - upgrade_d7_taxonomy_terms:nursery
+    - upgrade_d7_taxonomy_terms:organic_ag
+    - upgrade_d7_taxonomy_terms:owri
+    - upgrade_d7_taxonomy_terms:swd
+    - upgrade_d7_taxonomy_terms:turf
+    - upgrade_d7_taxonomy_terms:veg
+    - upgrade_d7_taxonomy_terms:work_areas

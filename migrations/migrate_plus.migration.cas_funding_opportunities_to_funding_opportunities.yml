@@ -1,0 +1,150 @@
+langcode: en
+status: true
+id: cas_funding_opportunities_to_funding_opportunities
+label: 'Basic Funding Opportunities to Funding Opportunities Migration'
+migration_group: content
+dependencies: {  }
+migration_tags:
+  - Drupal 7
+  - Content
+  - Layout content
+  - OSU
+  - CAS
+  - CAS Content
+source:
+  plugin: d7_node_domain_access
+  node_type: funding_opportunities
+  high_water_property:
+    name: changed
+
+process:
+  title: title
+
+  # Body field
+  body:
+    plugin: sub_process
+    source: body
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      summary: summary
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+
+  # String fields (D7 text -> D10 string)
+  field_fundop_number:
+    plugin: get
+    source: field_number
+  field_fundop_sponsor:
+    plugin: get
+    source: field_sponsor
+
+  # Integer field (D7 number_integer -> D10 integer)
+  field_fundop_award_ceiling:
+    plugin: get
+    source: field_award_amount
+
+  # Boolean field (D7 list_boolean 0/1 -> D10 boolean)
+  field_fundop_open_ended:
+    plugin: get
+    source: field_open_ended
+
+  # Datetime fields (D7 datetime 'Y-m-d H:i:s' -> D10 date 'Y-m-d')
+  field_fundop_due_date_full:
+    plugin: sub_process
+    source: field_due_date
+    process:
+      value:
+        plugin: format_date
+        from_format: 'Y-m-d H:i:s'
+        to_format: 'Y-m-d'
+        source: value
+  field_fundop_due_date_loi:
+    plugin: sub_process
+    source: field_due_date_letter_of_intent
+    process:
+      value:
+        plugin: format_date
+        from_format: 'Y-m-d H:i:s'
+        to_format: 'Y-m-d'
+        source: value
+  field_fundop_posted_date:
+    plugin: sub_process
+    source: field_posted_date
+    process:
+      value:
+        plugin: format_date
+        from_format: 'Y-m-d H:i:s'
+        to_format: 'Y-m-d'
+        source: value
+
+  # Link field
+  field_fundop_link:
+    plugin: sub_process
+    source: field_link
+    process:
+      uri: url
+      title: title
+
+  # Taxonomy: D7 field_cas_section (vocab type) -> D10 field_tax_cas_section
+  field_tax_cas_section:
+    plugin: sub_process
+    source: field_cas_section
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_taxonomy_terms:type
+          source: tid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+
+  # Meta tags
+  field_meta_tags:
+    plugin: d7_metatag_entities
+    source: pseudo_metatag_entities
+
+  # Path settings
+  path/pathauto:
+    plugin: default_value
+    default_value: 0
+
+  # Content type
+  type:
+    plugin: default_value
+    default_value: funding_opportunities
+
+  # Domain access fields
+  field_domain_access:
+    plugin: sub_process
+    source: domain_access_node
+    process:
+      target_id: target_id
+
+  field_domain_all_affiliates:
+    plugin: get
+    source: domain_all_affiliates
+
+  field_domain_source:
+    plugin: get
+    source: domain_source
+
+  # Standard node fields
+  uid: node_uid
+  status: status
+  created: created
+  changed: changed
+  promote: promote
+  sticky: sticky
+
+destination:
+  plugin: 'entity:node'
+  default_bundle: funding_opportunities
+
+migration_dependencies:
+  required:
+    - upgrade_d7_files
+    - upgrade_d7_users_with_roles
+    - upgrade_d7_taxonomy_terms:type

@@ -40,9 +40,12 @@ process:
     source: field_lp_picbox_box_image
     process:
       target_id:
-        plugin: migration_lookup
-        migration: upgrade_d7_media_images
-        source: fid
+        - plugin: migration_lookup
+          migration: upgrade_d7_media_images
+          source: fid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
 destination:
   plugin: entity:block_content
 migration_dependencies:

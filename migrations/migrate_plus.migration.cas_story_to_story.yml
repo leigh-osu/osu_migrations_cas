@@ -1,0 +1,142 @@
+langcode: en
+status: true
+id: cas_story_to_story
+label: 'Story to Story Content Migration'
+migration_group: content
+dependencies: { }
+migration_tags:
+  - Drupal 7
+  - Content
+  - Layout content
+  - OSU
+  - CAS
+  - CAS content
+
+source:
+  plugin: d7_node_domain_accessaa
+  node_type: story
+  high_water_property:
+    name: changed
+
+process:
+  title: title
+
+  # Body
+  body:
+    plugin: sub_process
+    source: body
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      summary: summary
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+
+  # Subtitle/caption
+  field_osu_story_caption:
+    plugin: get
+    source: field_subtitle
+
+  # Story category
+  field_story_category:
+    plugin: get
+    source: field_category
+
+  # Feature flag (D7 list_boolean -> D10 boolean)
+  field_story_osu_story:
+    plugin: get
+    source: field_feature_story
+
+  # Publish date
+  field_story_publish_date:
+    plugin: sub_process
+    source: field_published_date
+    process:
+      value:
+        plugin: format_date
+        from_format: 'Y-m-d H:i:s'
+        to_format: 'Y-m-d'
+        source: value
+
+  # Cover image (D7 field_picture -> D10 media)
+  field_osu_story_cover_image:
+    plugin: sub_process
+    source: field_picture
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_media_images
+          source: fid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+
+  # Related images become additional story media
+  field_story_media:
+    plugin: sub_process
+    source: field_related_images
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_media_images
+          source: fid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+
+  # NOTE: field_geographic_region_affected (vocab geographic_region) and
+  # field_mission_area (vocab focus_area) have no upgrade_d7_taxonomy_terms
+  # derivatives configured yet — wire them up once those vocab migrations exist.
+
+  # NOTE: skipped because no clean D10 destination:
+  #   field_author, field_source, field_grant_details, field_keywords,
+  #   field_thumbnail, field_type_of_story, field_related_links,
+  #   field_principal_individual_s_
+
+  # Meta tags
+  field_meta_tags:
+    - plugin: d7_metatag_entities
+      source: pseudo_metatag_entities
+
+  # Path settings
+  path/pathauto:
+    plugin: default_value
+    default_value: 0
+
+  # Content type
+  type:
+    plugin: default_value
+    default_value: story
+
+  # Domain access
+  field_domain_access:
+    - plugin: sub_process
+      source: domain_access_node
+      process:
+        target_id: target_id
+  field_domain_all_affiliates:
+    - plugin: get
+      source: domain_all_affiliates
+  field_domain_source:
+    - plugin: get
+      source: domain_source
+
+  # Standard node fields
+  uid: node_uid
+  status: status
+  created: created
+  changed: changed
+  promote: promote
+  sticky: sticky
+
+destination:
+  plugin: 'entity:node'
+  default_bundle: story
+
+migration_dependencies:
+  required:
+    - upgrade_d7_files
+    - upgrade_d7_users_with_roles
+    - upgrade_d7_media_images

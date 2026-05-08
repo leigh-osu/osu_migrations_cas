@@ -1,0 +1,292 @@
+
+langcode: en
+status: true
+id: cas_dfs_to_dfs
+label: 'Basic Degree Fact Sheet to DFS Migration'
+migration_group: content
+dependencies: { }
+migration_tags:
+  - Drupal 7
+  - Content
+  - Layout content
+  - OSU
+  - CAS
+  - CAS content
+
+source:
+  plugin: d7_node_domain_access
+  node_type: degree_fact_sheet
+  high_water_property:
+    name: changed
+
+process:
+  title: title
+
+  # Body
+  body:
+    plugin: sub_process
+    source: body
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      summary: summary
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+
+  # Simple text -> string / string_long / text_long passthroughs
+  field_dfs_introduction:
+    plugin: get
+    source: field_dfs_introduction
+  field_dfs_introduction_header:
+    plugin: get
+    source: field_dfs_introduction_header
+  field_dfs_faces_of_agsci:
+    plugin: get
+    source: field_dfs_faces_of_agsci
+  field_dfs_degree_options:
+    plugin: get
+    source: field_dfs_degree_options
+  field_dfs_potential_career_paths:
+    plugin: get
+    source: field_dfs_potential_career_paths
+  field_dfs_advising_email:
+    plugin: get
+    source: field_dfs_advising_email
+  field_dfs_number_of_students:
+    plugin: get
+    source: field_dfs_number_of_students
+
+  # List fields (list_text -> list_string)
+  field_dfs_degree_focus_area:
+    plugin: get
+    source: field_degree_focus_area
+  field_dfs_degree_level:
+    plugin: get
+    source: field_degree_level
+  field_dfs_language:
+    plugin: get
+    source: field_language
+  field_dfs_level:
+    plugin: get
+    source: field_level
+  field_dfs_location:
+    plugin: get
+    source: field_location_dfs
+
+  # Boolean (list_boolean -> boolean)
+  field_dfs_node_hide_title:
+    plugin: get
+    source: field_node_hide_title
+
+  # Social text fields renamed from group_* to dfs_*
+  field_dfs_facebook:
+    plugin: get
+    source: field_group_facebook
+  field_dfs_instagram:
+    plugin: get
+    source: field_group_instagram
+  field_dfs_linkedin:
+    plugin: get
+    source: field_group_linkedin
+  field_dfs_twitter:
+    plugin: get
+    source: field_group_twitter
+  field_dfs_youtube:
+    plugin: get
+    source: field_group_youtube
+
+  # Link fields (link_field -> link). url->uri, title->title.
+  field_dfs_cascades_campus:
+    plugin: sub_process
+    source: field_cascades_campus
+    process:
+      uri: url
+      title: title
+  field_dfs_corvallis_campus:
+    plugin: sub_process
+    source: field_corvallis_campus
+    process:
+      uri: url
+      title: title
+  field_dfs_la_grande_campus:
+    plugin: sub_process
+    source: field_la_grande_campus
+    process:
+      uri: url
+      title: title
+  field_dfs_newport_campus:
+    plugin: sub_process
+    source: field_newport_campus
+    process:
+      uri: url
+      title: title
+  field_dfs_ecampus:
+    plugin: sub_process
+    source: field_ecampus
+    process:
+      uri: url
+      title: title
+  field_dfs_department_link:
+    plugin: sub_process
+    source: field_dfs_department_link
+    process:
+      uri: url
+      title: title
+  field_dfs_preferred_link:
+    plugin: sub_process
+    source: field_dfs_preferred_link
+    process:
+      uri: url
+      title: title
+  field_dfs_osu_catalog:
+    plugin: sub_process
+    source: field_osu_catalog
+    process:
+      uri: url
+      title: title
+  field_dfs_example_4_year_plan:
+    plugin: sub_process
+    source: field_example_4_year_plan
+    process:
+      uri: url
+      title: title
+  field_dfs_learning_outcomes:
+    plugin: sub_process
+    source: field_ds_learning_outcomes
+    process:
+      uri: url
+      title: title
+
+  # Image fields (D7 image -> D10 image, using file migration lookup)
+  field_dfs_banner:
+    plugin: sub_process
+    source: field_dfs_banner
+    process:
+      target_id:
+        plugin: migration_lookup
+        migration: upgrade_d7_files
+        source: fid
+      alt: alt
+      title: title
+      width: width
+      height: height
+  field_dfs_box_image:
+    plugin: sub_process
+    source: field_dfs_box_image
+    process:
+      target_id:
+        plugin: migration_lookup
+        migration: upgrade_d7_files
+        source: fid
+      alt: alt
+      title: title
+      width: width
+      height: height
+  field_dfs_photo:
+    plugin: sub_process
+    source: field_dfs_photo
+    process:
+      target_id:
+        plugin: migration_lookup
+        migration: upgrade_d7_files
+        source: fid
+      alt: alt
+      title: title
+      width: width
+      height: height
+
+  # File fields (PDFs)
+  field_dfs_pdf_flyer:
+    plugin: sub_process
+    source: field_pdf_flyer
+    process:
+      target_id:
+        plugin: migration_lookup
+        migration: upgrade_d7_files
+        source: fid
+      display: display
+      description: description
+  field_dfs_pdf_flyer_espanol:
+    plugin: sub_process
+    source: field_pdf_flyer_espanol
+    process:
+      target_id:
+        plugin: migration_lookup
+        migration: upgrade_d7_files
+        source: fid
+      display: display
+      description: description
+
+  # Advisor (entityreference -> user)
+  field_dfs_advisor:
+    plugin: sub_process
+    source: field_dfs_advisor
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_users_with_roles
+          source: target_id
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+
+  # Taxonomy (cas_themes vocab)
+  field_dfs_cas_themes:
+    plugin: sub_process
+    source: field_cas_themes
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_taxonomy_terms:cas_impact_areas
+          source: tid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+
+  # Meta tags
+  field_meta_tags:
+    plugin: d7_metatag_entities
+    source: pseudo_metatag_entities
+
+  # Path settings
+  path/pathauto:
+    plugin: default_value
+    default_value: 0
+
+  # Content type
+  type:
+    plugin: default_value
+    default_value: degree_fact_sheet
+
+  # Domain access
+  field_domain_access:
+    plugin: sub_process
+    source: domain_access_node
+    process:
+      target_id: target_id
+  field_domain_all_affiliates:
+    plugin: get
+    source: domain_all_affiliates
+  field_domain_source:
+    plugin: get
+    source: domain_source
+
+  # Standard node fields
+  uid: node_uid
+  status: status
+  created: created
+  changed: changed
+  promote: promote
+  sticky: sticky
+
+destination:
+  plugin: 'entity:node'
+  default_bundle: degree_fact_sheet
+
+migration_dependencies:
+  required:
+    - upgrade_d7_files
+    - upgrade_d7_users_with_roles
+    - upgrade_d7_taxonomy_terms:cas_impact_areas

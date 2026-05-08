@@ -1,0 +1,167 @@
+langcode: en
+status: true
+id: cas_enterprise_budgets_to_enterprise_budgets
+label: 'Basic Enterprise Budgets to Enterprise Budgets Migration'
+migration_group: content
+dependencies: {  }
+migration_tags:
+  - Drupal 7
+  - Content
+  - Layout content
+  - OSU
+  - CAS
+  - CAS Content
+source:
+  plugin: d7_node_domain_access
+  node_type: enterprise_budgets
+  high_water_property:
+    name: changed
+
+process:
+  title: title
+
+  # Body field
+  body:
+    plugin: sub_process
+    source: body
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      summary: summary
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+
+  # String fields (D7 text -> D10 string, both pre-widened to 255)
+  field_aeb_author:
+    plugin: get
+    source: field_aeb_author
+  field_aeb_description:
+    plugin: get
+    source: field_aeb_description
+
+  # Integer field
+  field_aeb_size:
+    plugin: get
+    source: field_aeb_size
+
+  # Datetime field (D7 datetime 'Y-m-d H:i:s' -> D10 date 'Y-m-d')
+  field_aeb_date:
+    plugin: sub_process
+    source: field_aeb_date
+    process:
+      value:
+        plugin: format_date
+        from_format: 'Y-m-d H:i:s'
+        to_format: 'Y-m-d'
+        source: value
+
+  # List string field (D7 'cows/month' -> D10 'cows_month'; others pass through)
+  field_aeb_units:
+    plugin: sub_process
+    source: field_aeb_units
+    process:
+      value:
+        plugin: static_map
+        source: value
+        bypass: true
+        map:
+          'cows/month': cows_month
+
+  # Taxonomy: D7 field_commodity (vocab commodity) -> D10 field_tax_commodity
+  field_tax_commodity:
+    plugin: sub_process
+    source: field_commodity
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_taxonomy_terms:commodity
+          source: tid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+
+  # Taxonomy: D7 field_counties (vocab oregon_counties) -> D10 field_tax_county (multi)
+  field_tax_county:
+    plugin: sub_process
+    source: field_counties
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_taxonomy_terms:oregon_counties
+          source: tid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+
+  # Taxonomy: D7 field_aeb_region (vocab geographic_region) -> D10 field_tax_region
+  field_tax_region:
+    plugin: sub_process
+    source: field_aeb_region
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_taxonomy_terms:geographic_region
+          source: tid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+
+  # NOTE: field_aeb_pdf and field_aeb_xls are entity_reference:media in D10, but the
+  # corresponding D7 fields (field_pdf, field_aeb_xls) are link_field types pointing
+  # to file URLs (e.g. /sites/agscid7/files/oaeb/pdf/EM8679.pdf). Most of these
+  # files were not managed (only ~32 of 147 nodes have managed files), so URL->media
+  # resolution would miss most rows. Left unmigrated for manual handling.
+
+  # NOTE: field_guid has no D10 destination — skipped.
+
+  # Meta tags
+  field_meta_tags:
+    plugin: d7_metatag_entities
+    source: pseudo_metatag_entities
+
+  # Path settings
+  path/pathauto:
+    plugin: default_value
+    default_value: 0
+
+  # Content type
+  type:
+    plugin: default_value
+    default_value: enterprise_budgets
+
+  # Domain access fields
+  field_domain_access:
+    plugin: sub_process
+    source: domain_access_node
+    process:
+      target_id: target_id
+
+  field_domain_all_affiliates:
+    plugin: get
+    source: domain_all_affiliates
+
+  field_domain_source:
+    plugin: get
+    source: domain_source
+
+  # Standard node fields
+  uid: node_uid
+  status: status
+  created: created
+  changed: changed
+  promote: promote
+  sticky: sticky
+
+destination:
+  plugin: 'entity:node'
+  default_bundle: enterprise_budgets
+
+migration_dependencies:
+  required:
+    - upgrade_d7_files
+    - upgrade_d7_users_with_roles
+    - upgrade_d7_taxonomy_terms:commodity
+    - upgrade_d7_taxonomy_terms:oregon_counties
+    - upgrade_d7_taxonomy_terms:geographic_region

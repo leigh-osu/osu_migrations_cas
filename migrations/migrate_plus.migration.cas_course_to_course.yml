@@ -1,0 +1,164 @@
+langcode: en
+status: true
+id: cas_course_to_course
+label: 'Basic Course to Course Migration'
+migration_group: content
+dependencies: {  }
+migration_tags:
+  - Drupal 7
+  - Content
+  - Layout content
+  - OSU
+  - CAS
+  - CAS Content
+source:
+  plugin: d7_node_domain_access
+  node_type: course
+  high_water_property:
+    name: changed
+
+process:
+  title: title
+
+  # Body field
+  body:
+    plugin: sub_process
+    source: body
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      summary: summary
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+
+  # String fields
+  field_course_course_number:
+    plugin: get
+    source: field_course_number
+  field_course_credits:
+    plugin: get
+    source: field_credits
+
+  # List string fields (allowed values match between D7 and D10)
+  field_course_class_location:
+    plugin: get
+    source: field_class_location
+  field_course_course_level:
+    plugin: get
+    source: field_course_level
+  field_course_frequency:
+    plugin: get
+    source: field_frequency
+  field_course_term:
+    plugin: get
+    source: field_term
+
+  # Text long fields
+  field_course_student_perspective:
+    plugin: sub_process
+    source: field_student_perspective
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
+
+  # Link field (multi-value)
+  field_course_links:
+    plugin: sub_process
+    source: field_links
+    process:
+      uri: url
+      title: title
+
+  # User reference (D7 user_reference -> D10 entity_reference:user)
+  field_course_instructor:
+    plugin: sub_process
+    source: field_instructor
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_users_with_roles
+          source: uid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+
+  # File field (D7 file -> D10 media:document)
+  field_course_syllabus:
+    plugin: sub_process
+    source: field_syllabus
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_media_documents
+          source: fid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+
+  # Taxonomy: D7 field_course_topic (vocab sorting_topics) -> D10 field_tax_topic
+  field_tax_topic:
+    plugin: sub_process
+    source: field_course_topic
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_taxonomy_terms:sorting_topics
+          source: tid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+
+  # Meta tags
+  field_meta_tags:
+    plugin: d7_metatag_entities
+    source: pseudo_metatag_entities
+
+  # Path settings
+  path/pathauto:
+    plugin: default_value
+    default_value: 0
+
+  # Content type
+  type:
+    plugin: default_value
+    default_value: course
+
+  # Domain access fields
+  field_domain_access:
+    plugin: sub_process
+    source: domain_access_node
+    process:
+      target_id: target_id
+
+  field_domain_all_affiliates:
+    plugin: get
+    source: domain_all_affiliates
+
+  field_domain_source:
+    plugin: get
+    source: domain_source
+
+  # Standard node fields
+  uid: node_uid
+  status: status
+  created: created
+  changed: changed
+  promote: promote
+  sticky: sticky
+
+destination:
+  plugin: 'entity:node'
+  default_bundle: course
+
+migration_dependencies:
+  required:
+    - upgrade_d7_files
+    - upgrade_d7_users_with_roles
+    - upgrade_d7_taxonomy_terms:sorting_topics
+    - upgrade_d7_media_documents
