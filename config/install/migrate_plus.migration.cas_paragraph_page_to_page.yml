@@ -1,13 +1,9 @@
 langcode: en
 status: true
-id: cas_book_to_page
-label: 'Book Page Content Migration'
+id: cas_paragraph_page_to_page
+label: 'Larch Page Content Migration'
 migration_group: content
-dependencies:
-  enforced:
-    module:
-      - paragraphs_to_layout_builder
-      - osu_migrations
+dependencies: { }
 migration_tags:
   - Drupal 7
   - Content
@@ -17,10 +13,9 @@ migration_tags:
   - CAS Content
 source:
   plugin: d7_node_domain_access
-  node_type: book
+  node_type: paragraph_page
   high_water_property:
     name: changed
-
   constants:
     # map paragraph types on pages to their corresponding migration filenames
     map:
@@ -45,8 +40,21 @@ source:
       paragraph_alert: 'paragraph_alert__to__layout_builder'
       paragraph_divider: 'paragraph_divider__to__layout_builder'
       paragraph_menu: 'paragraph_menu__to__layout_builder'
-      sacnas_officer_body_text: 'paragraph_sacnas_officer_body_text__to__layout_builder'
+      lp_vertical_tabs: 'paragraph_lp_vertical_tabs__to__layout_builder'
+      lp_picbox_grid: 'paragraph_lp_picbox_grid__to__layout_builder'
+      lp_adjustable_columns: 'paragraph_lp_adjustable_columns__to__layout_builder'
 process:
+
+  # Skip nodes whose serialized Layout Builder section exceeds the
+  # node__layout_builder__layout.layout_builder__layout_section column
+  # size (SQLSTATE[22001] "Data too long"). Add nids here as found.
+  _skip_oversize_layout:
+    plugin: skip_on_value
+    source: nid
+    method: row
+    value:
+      - 233101
+
   body:
     - plugin: sub_process
       source: body
@@ -58,26 +66,33 @@ process:
         format:
           plugin: default_value
           default_value: 'full_html'
+
   field_meta_tags:
     - plugin: d7_metatag_entities
       source: pseudo_metatag_entities
+
   path/pathauto:
     plugin: default_value
     default_value: 0
+
   default_temp:
     plugin: default_layout
     bundle: page
+
   paragraphs_temp:
     plugin: cas_paragraphs_layout
-    source_field: field_paragraph
+    source_field: field_larch_paragraph_sections
+
   layout_builder__layout:
     plugin: get
     source:
       - '@paragraphs_temp'
       - '@default_temp'
+
   type:
     plugin: default_value
     default_value: page
+
   field_domain_access:
     - plugin: sub_process
       source: domain_access_node
@@ -89,14 +104,26 @@ process:
   field_domain_source:
     - plugin: get
       source: domain_source
+
 destination:
   plugin: 'entity:node'
   bundle: page
+
 migration_dependencies:
   required:
     - upgrade_d7_files
     - upgrade_d7_users_with_roles
     - upgrade_d7_media_images
+  optional:
+    - upgrade_d7_media_audio
+    - upgrade_d7_media_documents
+    - upgrade_d7_media_kaltura
+    - upgrade_d7_media_local_video
+    - upgrade_d7_media_remote_video
+    # Ordering-only deps: drush ms reports phantom "unprocessed" rows for
+    # these (raw paragraphs_item count vs rows the d7_paragraphs_item source
+    # yields), so allRowsProcessed() is never true. Kept as optional so the
+    # requirements gate does not permanently block this node migration.
     - paragraph_1_column_full_width__to__layout_builder
     - paragraph_1_col_clean__to__layout_builder
     - paragraph_1_col__to__layout_builder
@@ -118,11 +145,6 @@ migration_dependencies:
     - paragraph_accordion__to__layout_builder
     - paragraph_alert__to__layout_builder
     - paragraph_accordian__to__layout_builder
-    - paragraph_sacnas_officer_body_text_left__to__layout_builder
-    - paragraph_sacnas_officer_body_text_right__to__layout_builder
-  optional:
-    - upgrade_d7_media_audio
-    - upgrade_d7_media_documents
-    - upgrade_d7_media_kaltura
-    - upgrade_d7_media_local_video
-    - upgrade_d7_media_remote_video
+    - paragraph_lp_vertical_tabs__to__layout_builder
+    - paragraph_lp_picbox_grid__to__layout_builder
+    - paragraph_lp_adjustable_columns__to__layout_builder

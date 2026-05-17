@@ -1,5 +1,5 @@
-id: paragraph_4_column_col1__to__layout_builder
-label: Drupal 7 4_column Paragraphs
+id: paragraph_lp_adjustable_columns__to__layout_builder
+label: Drupal 7 lp_adjustable_columns Paragraphs
 migration_group: paragraphs_to_layout_builder
 dependencies:
   enforced:
@@ -15,36 +15,29 @@ migration_tags:
   - CAS Paragraphs
   - CAS
 source:
-  plugin: d7_paragraphs_item
-  bundle: 4_column
+  plugin: osu_d7_paragraphs_item
+  bundle: lp_adjustable_columns
   key: migrate
   high_water_property:
     name: revision_id
+    alias: pr
 
 process:
   type:
     plugin: default_value
     default_value: 'paragraph_block'
-  body:
-    - plugin: sub_process
-      source: field_p4_col1_content
-      process:
-        value:
-          plugin: osu_media_wysiwyg_filter
-          source: value
-        format:
-          plugin: default_value
-          default_value: 'full_html'
   info:
+    source: field_paragraph_label
     plugin: default_value
-    default_value: 'Migrated d7 paragraph 4_column_col1'
+    default_value: 'Migrated d7 lp_adjustable_columns section'
+  field_block_serialized_data:
+    plugin: cas_adjustable_columns_section
+    source: field_lp_adj_column
   reusable:
     plugin: default_value
     default_value: 0
-
 destination:
   plugin: entity:block_content
-
 migration_dependencies:
   required: [  ]
   optional: [  ]

@@ -15,6 +15,7 @@ source:
   bundle: group
   high_water_property:
     name: revision_id
+    alias: fr
 
 process:
   type:

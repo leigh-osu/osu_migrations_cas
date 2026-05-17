@@ -1,21 +1,25 @@
 langcode: en
 status: true
-id: cas_page_to_page
-label: 'Basic Page Content Migration'
+id: cas_book_to_page
+label: 'Book Page Content Migration'
 migration_group: content
-dependencies: { }
+dependencies:
+  enforced:
+    module:
+      - paragraphs_to_layout_builder
+      - osu_migrations
 migration_tags:
   - Drupal 7
   - Content
   - Layout content
   - OSU
   - CAS
-  - CAS content
+  - CAS Content
 source:
   plugin: d7_node_domain_access
-  node_type: page
+  node_type: book
   high_water_property:
-    name:
+    name: changed
 
   constants:
     # map paragraph types on pages to their corresponding migration filenames
@@ -42,6 +46,7 @@ source:
       paragraph_divider: 'paragraph_divider__to__layout_builder'
       paragraph_menu: 'paragraph_menu__to__layout_builder'
       sacnas_officer_body_text: 'paragraph_sacnas_officer_body_text__to__layout_builder'
+      lp_picbox_grid: 'paragraph_lp_picbox_grid__to__layout_builder'
 process:
   body:
     - plugin: sub_process
@@ -93,6 +98,16 @@ migration_dependencies:
     - upgrade_d7_files
     - upgrade_d7_users_with_roles
     - upgrade_d7_media_images
+  optional:
+    - upgrade_d7_media_audio
+    - upgrade_d7_media_documents
+    - upgrade_d7_media_kaltura
+    - upgrade_d7_media_local_video
+    - upgrade_d7_media_remote_video
+    # Ordering-only deps: drush ms reports phantom "unprocessed" rows for
+    # these (raw paragraphs_item count vs rows the d7_paragraphs_item source
+    # yields), so allRowsProcessed() is never true. Kept as optional so the
+    # requirements gate does not permanently block cas_book_to_page.
     - paragraph_1_column_full_width__to__layout_builder
     - paragraph_1_col_clean__to__layout_builder
     - paragraph_1_col__to__layout_builder
@@ -116,9 +131,4 @@ migration_dependencies:
     - paragraph_accordian__to__layout_builder
     - paragraph_sacnas_officer_body_text_left__to__layout_builder
     - paragraph_sacnas_officer_body_text_right__to__layout_builder
-  optional:
-    - upgrade_d7_media_audio
-    - upgrade_d7_media_documents
-    - upgrade_d7_media_kaltura
-    - upgrade_d7_media_local_video
-    - upgrade_d7_media_remote_video
+    - paragraph_lp_picbox_grid__to__layout_builder

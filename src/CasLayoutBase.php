@@ -47,13 +47,15 @@ class CasLayoutBase extends LayoutBase {
      * all map to bootstrap_layout_builder:blb_col_1 along with any other
      * paragraph type not listed here specifically.
      */
+    // Returns a BLB layout_option ID (e.g. blb_col_2_67_33). createSection()
+    // resolves this to the underlying Layout Builder plugin (blb_col_2).
     return match ($paragraphType) {
       "paragraph_1_col",
-      "paragraph_3_col" => "bootstrap_layout_builder:blb_col_3",
+      "paragraph_3_col" => "bootstrap_layout_builder:blb_col_3_three_equal_columns",
       "4_column",
-      "paragraph_menu" => "bootstrap_layout_builder:blb_col_4",
-      "paragraph_2_col" => "bootstrap_layout_builder:blb_col_2",
-      "2_column_4_8" => "bootstrap_layout_builder:blb_col_4_8",
+      "paragraph_menu" => "bootstrap_layout_builder:blb_col_4_four_equal_columns",
+      "paragraph_2_col" => "bootstrap_layout_builder:blb_col_2_two_equal_columns",
+      "2_column_4_8" => "bootstrap_layout_builder:blb_col_2_33_67",
       "paragraph_2_column_8_4" => "bootstrap_layout_builder:blb_col_2_67_33",
       default => "bootstrap_layout_builder:blb_col_1"
     };
@@ -75,7 +77,12 @@ class CasLayoutBase extends LayoutBase {
   public function createSection($layout, array $components = [], array $settings = []) {
     // Get default section settings and merge with passed in settings.
     $settings = $settings + $this->getDefaultSectionSettings($layout);
-    return new Section($layout, $settings, $components);
+    // BLB layout_option IDs (e.g. blb_col_2_67_33) are section settings, not
+    // Layout Builder plugin IDs. Resolve to the real plugin (blb_col_N).
+    $real_layout = preg_match('/^bootstrap_layout_builder:(blb_col_\d+)/', $layout, $m)
+      ? 'bootstrap_layout_builder:' . $m[1]
+      : $layout;
+    return new Section($real_layout, $settings, $components);
   }
 
   /**
@@ -93,12 +100,13 @@ class CasLayoutBase extends LayoutBase {
         return ['container' => 'container'];
 
       case 'bootstrap_layout_builder:blb_col_2':
+      case 'bootstrap_layout_builder:blb_col_2_two_equal_columns':
         return [
           'breakpoints' => [
-            'extra_wide_desktop' => 'blb_col_6_6',
-            'desktop' => 'blb_col_6_6',
-            'tablet' => 'blb_col_6_6',
-            'mobile' => 'blb_col_12',
+            'extra_wide_desktop' => 'blb_col_2_two_equal_columns',
+            'desktop' => 'blb_col_2_two_equal_columns',
+            'tablet' => 'blb_col_2_two_equal_columns',
+            'mobile' => 'blb_col_1_full_width',
           ],
           'layout_regions_classes' => [
             'blb_region_col_1' => [
@@ -118,13 +126,13 @@ class CasLayoutBase extends LayoutBase {
           'remove_gutters' => '0',
         ];
 
-      case 'bootstrap_layout_builder:blb_col_4_8':
+      case 'bootstrap_layout_builder:blb_col_2_33_67':
         return [
           'breakpoints' => [
-            'extra_wide_desktop' => 'blb_col_4_8',
-            'desktop' => 'blb_col_4_8',
-            'tablet' => 'blb_col_4_8',
-            'mobile' => 'blb_col_12',
+            'extra_wide_desktop' => 'blb_col_2_33_67',
+            'desktop' => 'blb_col_2_33_67',
+            'tablet' => 'blb_col_2_33_67',
+            'mobile' => 'blb_col_1_full_width',
           ],
           'layout_regions_classes' => [
             'blb_region_col_1' => [
@@ -144,13 +152,13 @@ class CasLayoutBase extends LayoutBase {
           'remove_gutters' => '0',
         ];
 
-      case 'bootstrap_layout_builder:blb_col_8_4':
+      case 'bootstrap_layout_builder:blb_col_2_67_33':
         return [
           'breakpoints' => [
-            'extra_wide_desktop' => 'blb_col_8_4',
-            'desktop' => 'blb_col_8_4',
-            'tablet' => 'blb_col_8_4',
-            'mobile' => 'blb_col_12',
+            'extra_wide_desktop' => 'blb_col_2_67_33',
+            'desktop' => 'blb_col_2_67_33',
+            'tablet' => 'blb_col_2_67_33',
+            'mobile' => 'blb_col_1_full_width',
           ],
           'layout_regions_classes' => [
             'blb_region_col_1' => [
@@ -171,12 +179,13 @@ class CasLayoutBase extends LayoutBase {
         ];
 
       case 'bootstrap_layout_builder:blb_col_3':
+      case 'bootstrap_layout_builder:blb_col_3_three_equal_columns':
         return [
           'breakpoints' => [
-            'extra_wide_desktop' => 'blb_col_4_4_4',
-            'desktop' => 'blb_col_4_4_4',
-            'tablet' => 'blb_col_4_4_4',
-            'mobile' => 'blb_col_12',
+            'extra_wide_desktop' => 'blb_col_3_three_equal_columns',
+            'desktop' => 'blb_col_3_three_equal_columns',
+            'tablet' => 'blb_col_3_three_equal_columns',
+            'mobile' => 'blb_col_1_full_width',
           ],
           'layout_regions_classes' => [
             'blb_region_col_1' => [
@@ -203,11 +212,12 @@ class CasLayoutBase extends LayoutBase {
         ];
 
       case 'bootstrap_layout_builder:blb_col_4':
+      case 'bootstrap_layout_builder:blb_col_4_four_equal_columns':
         return [
           'breakpoints' => [
-            'desktop' => 'blb_col_3_3_3_3',
-            'tablet' => 'blb_col_3_3_3_3',
-            'mobile' => 'blb_col_12',
+            'desktop' => 'blb_col_4_four_equal_columns',
+            'tablet' => 'blb_col_4_four_equal_columns',
+            'mobile' => 'blb_col_1_full_width',
           ],
           'layout_regions_classes' => [
             'blb_region_col_1' => [

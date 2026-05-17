@@ -61,11 +61,15 @@ class CasParagraphsLayout extends CasLayoutBase {
 
     $values = $row->getSourceProperty($sourceField);
     $map = $row->getSource()['constants']['map'];
+    $ignored_bundles = ['alert_message', 'viewfield', '2_column_views', '1_column_background_video'];
     $sections = [];
     if (is_array($values)) {
       foreach ($values as $delta => $item) {
         try {
           $type = $this->getParagraphType($item['value']);
+          if (in_array($type, $ignored_bundles, TRUE)) {
+            continue;
+          }
           $sectionType = $this->getSectionType($type);
           $section = $this->createSection($sectionType, []);
 

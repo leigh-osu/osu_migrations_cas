@@ -1,4 +1,4 @@
-id: paragraph_2_column_4_8_right__to__layout_builder
+id: paragraph_2_column_4_8_left__to__layout_builder
 label: Drupal 7 paragraph_2_column_4_8 Paragraphs
 migration_group: paragraphs_to_layout_builder
 dependencies:
@@ -14,12 +14,14 @@ migration_tags:
   - OSU
   - CAS Paragraphs
   - CAS
+
 source:
-  plugin: d7_paragraphs_item
+  plugin: osu_d7_paragraphs_item
   bundle: 2_column_4_8
   key: migrate
   high_water_property:
     name: revision_id
+    alias: pr
 
 process:
   type:
@@ -27,7 +29,7 @@ process:
     default_value: 'paragraph_block'
   body:
     - plugin: sub_process
-      source: field_p_2_col_right_main
+      source: field_left_content
       process:
         value:
           plugin: osu_media_wysiwyg_filter

@@ -13,7 +13,7 @@ migration_tags:
   - CAS content
 
 source:
-  plugin: d7_node_domain_accessaa
+  plugin: d7_node_domain_access
   node_type: story
   high_water_property:
     name: changed

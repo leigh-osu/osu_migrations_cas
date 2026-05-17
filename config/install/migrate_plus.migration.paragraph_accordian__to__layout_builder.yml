@@ -16,11 +16,12 @@ migration_tags:
   - CAS
   - CAS Paragraphs
 source:
-  plugin: d7_paragraphs_item
+  plugin: osu_d7_paragraphs_item
   bundle: accordian
   key: migrate
   high_water_property:
     name: revision_id
+    alias: pr
 
 process:
   type:
