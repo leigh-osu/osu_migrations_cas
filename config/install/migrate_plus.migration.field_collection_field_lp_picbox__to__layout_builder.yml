@@ -13,10 +13,6 @@ source:
   plugin: d7_field_collection_item
   field_name: field_lp_picbox
   bundle: group
-  high_water_property:
-    name: revision_id
-    alias: fr
-
 process:
   type:
     plugin: default_value

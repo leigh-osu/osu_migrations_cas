@@ -18,10 +18,6 @@ source:
   plugin: osu_d7_paragraphs_item
   bundle: lp_adjustable_columns
   key: migrate
-  high_water_property:
-    name: revision_id
-    alias: pr
-
 process:
   type:
     plugin: default_value
