@@ -1,0 +1,52 @@
+id: paragraph_alert_message__to__layout_builder
+label: Drupal 7 alert_message Paragraphs
+migration_group: paragraphs_to_layout_builder
+dependencies:
+  enforced:
+    module:
+      - osu_migrations
+      - paragraphs_to_layout_builder
+migration_tags:
+  - Drupal 7
+  - Content
+  - Layout content
+  - OSU Paragraphs
+  - OSU
+  - CAS Paragraphs
+  - CAS
+source:
+  plugin: osu_d7_paragraphs_item
+  bundle: alert_message
+  key: migrate
+process:
+  type:
+    plugin: default_value
+    default_value: 'paragraph_block'
+  body:
+    - plugin: sub_process
+      source: field_p_alert_message
+      process:
+        value:
+          plugin: osu_media_wysiwyg_filter
+          source: value
+        format:
+          plugin: default_value
+          default_value: 'full_html'
+  # The D7 `alert_message` bundle only has field_p_alert_message (no type or
+  # margin fields), so apply a fixed alert style class.
+  field_styles:
+    plugin: default_value
+    default_value: 'alert alert-warning'
+  info:
+    plugin: default_value
+    default_value: 'Migrated d7 paragraph alert_message'
+  reusable:
+    plugin: default_value
+    default_value: 0
+
+destination:
+  plugin: entity:block_content
+
+migration_dependencies:
+  required: [  ]
+  optional: [  ]

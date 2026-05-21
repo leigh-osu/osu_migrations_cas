@@ -47,7 +47,7 @@ source:
       4_column_col3: 'paragraph_4_column_col3__to__layout_builder'
       4_column_col4: 'paragraph_4_column_col4__to__layout_builder'
       paragraph_accordion: 'paragraph_accordion__to__layout_builder'
-      paragraph_alert: 'paragraph_alert__to__layout_builder'
+      alert_message: 'paragraph_alert_message__to__layout_builder'
       paragraph_divider: 'paragraph_divider__to__layout_builder'
       paragraph_menu: 'paragraph_menu__to__layout_builder'
       sacnas_officer_body_text: 'paragraph_sacnas_officer_body_text__to__layout_builder'

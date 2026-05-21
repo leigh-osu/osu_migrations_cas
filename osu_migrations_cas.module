@@ -1,0 +1,65 @@
+<?php
+
+/**
+ * @file
+ * Hook implementations for the OSU Migrations - CAS module.
+ */
+
+/**
+ * Implements hook_migration_plugins_alter().
+ *
+ * The core `link_uri` process plugin used by `upgrade_d7_menu_links`
+ * route-validates every D7 menu link path and throws "The path ... failed
+ * validation" (failing the whole row) whenever the target route does not
+ * resolve at migration time. On the CAS site this happens for:
+ *   - menu links to D7 nodes whose content type is not migrated, and
+ *   - menu links that point at a D7 URL-alias path (e.g. /research/...,
+ *     /people/..., /degrees/..., /group/.../tag/...).
+ *
+ * Setting `validate_route: false` makes LinkUri return the `internal:/...`
+ * URI instead of throwing. Links to *migrated* nodes are still upgraded to
+ * `entity:node/N` automatically (LinkUri does that when the route resolves),
+ * and alias-path links resolve at render time because the `OSU Alias`
+ * migration runs before `OSU Menus`. This recovers the 69 menu links that
+ * were previously dropped, without modifying the osu_migrations module.
+ */
+function osu_migrations_cas_migration_plugins_alter(array &$migrations) {
+  foreach ($migrations as &$migration) {
+    $id = $migration['id'] ?? NULL;
+
+    // Menu links: stop core LinkUri from failing whole rows when a D7 path
+    // does not resolve to a route at migration time.
+    if ($id === 'upgrade_d7_menu_links' && !empty($migration['process']['link/uri'])) {
+      $link_uri = &$migration['process']['link/uri'];
+      // The process definition may be a single plugin mapping or a pipeline
+      // (list of steps); handle both.
+      if (isset($link_uri['plugin'])) {
+        if ($link_uri['plugin'] === 'link_uri') {
+          $link_uri['validate_route'] = FALSE;
+        }
+      }
+      else {
+        foreach ($link_uri as &$step) {
+          if (is_array($step) && ($step['plugin'] ?? NULL) === 'link_uri') {
+            $step['validate_route'] = FALSE;
+          }
+        }
+        unset($step);
+      }
+      unset($link_uri);
+    }
+
+    // Path redirects: skip D7 source rows that collide on redirect.hash
+    // instead of letting the duplicate-key insert fail the row. The dedupe
+    // step runs first on redirect_source/path and passes the value through.
+    if ($id === 'upgrade_d7_path_redirect' && isset($migration['process']['redirect_source/path'])) {
+      $migration['process']['redirect_source/path'] = [
+        [
+          'plugin' => 'cas_redirect_hash_dedupe',
+          'source' => 'source',
+        ],
+      ];
+    }
+  }
+  unset($migration);
+}

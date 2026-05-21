@@ -39,7 +39,7 @@ process:
     default_value: 'full_html'
 info:
   plugin: default_value
-  default_value: 'Migrated d7 paragraph sacnas_officer_body_text_left'
+  default_value: 'Migrated d7 paragraph sacnas_officer_body_text'
 reusable:
   plugin: default_value
   default_value: 0
