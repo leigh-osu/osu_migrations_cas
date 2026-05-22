@@ -1,0 +1,68 @@
+langcode: en
+status: true
+id: cas_node_parent_unit_group
+label: 'CAS: Create Groups that were Parent Units (with fields)'
+migration_group: osu_groups
+dependencies: {  }
+migration_tags:
+  - Drupal 7 OG
+  - OSU Groups Structure
+  - OSU Groups
+  - OSU
+  - CAS
+source:
+  plugin: d7_node
+  node_type: parent_unit
+process:
+  # Leave id as the source nid - it is used for group menu/content lookups.
+  type:
+    plugin: default_value
+    default_value: basic_group
+  id: nid
+  uid:
+    plugin: default_value
+    default_value: 1
+  label: title
+  path/pathauto:
+    plugin: default_value
+    default_value: 0
+  path/alias: alias
+
+  # Body
+  body:
+    plugin: sub_process
+    source: body
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      summary: summary
+      format:
+        plugin: default_value
+        default_value: full_html
+
+  # Contact (fields shared with the parent_unit bundle). The D7 email field
+  # stores its value in the `email` property, not `value`, so remap explicitly.
+  field_group_email:
+    plugin: sub_process
+    source: field_group_email
+    process:
+      value: email
+  field_group_phone: field_group_phone
+
+  # Location
+  field_group_location_name: field_group_location_name
+  field_group_location_address: field_group_location_address
+  field_group_location_city: field_group_location_city
+  field_group_location_state: field_group_location_state
+  field_group_location_zip: field_group_location_zip
+
+  # Social
+  field_group_facebook: field_group_facebook
+  field_group_twitter: field_group_twitter
+  field_group_linkedin: field_group_linkedin
+  field_group_youtube: field_group_youtube
+  field_group_instagram: field_group_instagram
+destination:
+  plugin: 'entity:group'
+migration_dependencies: {  }

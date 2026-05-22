@@ -1,0 +1,150 @@
+langcode: en
+status: true
+id: cas_node_og_group
+label: 'CAS: Insert OG Group (with fields)'
+migration_group: osu_groups
+dependencies: {  }
+migration_tags:
+  - Drupal 7 OG
+  - OSU Groups Structure
+  - OSU Groups
+  - OSU
+  - CAS
+source:
+  plugin: d7_node
+  node_type: group
+process:
+  # Leave id as the source nid - it is used for group menu/content lookups.
+  type:
+    plugin: default_value
+    default_value: basic_group
+  id: nid
+  uid:
+    plugin: default_value
+    default_value: 1
+  label: title
+  path/pathauto:
+    plugin: default_value
+    default_value: 0
+  path/alias: alias
+
+  # Body
+  body:
+    plugin: sub_process
+    source: body
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      summary: summary
+      format:
+        plugin: default_value
+        default_value: full_html
+
+  # Group visibility (D7 group_access list_boolean -> D10 boolean)
+  field_group_access: group_access
+
+  # Parent Unit reference (D7 field_parent_unit -> the group created from the
+  # parent_unit node by cas_node_parent_unit_group; ids are preserved as nid).
+  field_group_parent_unit:
+    plugin: sub_process
+    source: field_parent_unit
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: cas_node_parent_unit_group
+          source: target_id
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+
+  # Short name
+  field_group_short_name: field_short_name
+
+  # Contact (D7 email field stores its value in the `email` property, not
+  # `value`, so it must be remapped explicitly).
+  field_group_email:
+    plugin: sub_process
+    source: field_group_email
+    process:
+      value: email
+  field_group_phone: field_group_phone
+
+  # Location
+  field_group_location_name: field_group_location_name
+  field_group_location_address: field_group_location_address
+  field_group_location_address2: field_group_location_address2
+  field_group_location_city: field_group_location_city
+  field_group_location_state: field_group_location_state
+  field_group_location_zip: field_group_location_zip
+
+  # Social
+  field_group_facebook: field_group_facebook
+  field_group_twitter: field_group_twitter
+  field_group_linkedin: field_group_linkedin
+  field_group_youtube: field_group_youtube
+  field_group_instagram: field_group_instagram
+
+  # Hours of operation (text_long)
+  field_group_hours:
+    plugin: sub_process
+    source: field_group_hours
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: full_html
+
+  # Additional information (D7 field_additional_information -> field_group_add_info)
+  field_group_add_info:
+    plugin: sub_process
+    source: field_additional_information
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: full_html
+
+  # Site coordinators (D7 user_reference -> D10 entity_reference:user)
+  field_site_coordinators:
+    plugin: sub_process
+    source: field_site_coordinator_s_
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_users_with_roles
+          source: uid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+
+  # Information sheet (D7 text URL -> D10 media:document reference).
+  # The D7 value is an absolute URL to a public PDF; resolve URL -> source fid
+  # -> migrated media document.
+  field_group_info_sheet:
+    plugin: sub_process
+    source: field_information_sheet
+    process:
+      target_id:
+        - plugin: cas_file_url_to_fid
+          source: value
+        - plugin: migration_lookup
+          migration: upgrade_d7_media_documents
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+
+  # Newsletter link
+  field_group_newsletter_link: field_group_newsletter_link
+destination:
+  plugin: 'entity:group'
+migration_dependencies:
+  required:
+    - cas_node_parent_unit_group
+    - upgrade_d7_users_with_roles
+    - upgrade_d7_media_documents
+  optional: {  }

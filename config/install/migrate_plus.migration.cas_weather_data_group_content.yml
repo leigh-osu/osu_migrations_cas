@@ -22,7 +22,7 @@ process:
     default_value: group_content_type_22a3acfc23d92
   gid:
     - plugin: migration_lookup
-      migration: upgrade_d7_node_og_group
+      migration: cas_node_og_group
       no_stub: true
       source: gid
     - plugin: skip_on_empty
@@ -40,5 +40,5 @@ destination:
   plugin: 'entity:group_content'
 migration_dependencies:
   required:
-    - upgrade_d7_node_og_group
+    - cas_node_og_group
     - cas_weather_data_to_weather_daily_data
