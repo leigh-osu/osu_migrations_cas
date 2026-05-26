@@ -1,0 +1,179 @@
+langcode: en
+status: true
+id: cas_user_profile_osu_faculty
+label: 'CAS OSU Faculty profile - additional fields'
+migration_group: content
+dependencies: {  }
+migration_tags:
+  - Drupal 7
+  - OSU
+  - CAS
+  - CAS Content
+source:
+  plugin: d7_osu_profile2
+  profile2_type: osu_faculty
+process:
+  nid:
+    - plugin: migration_lookup
+      migration: upgrade_d7_user_to_profile
+      source: uid
+      no_stub: true
+    - plugin: skip_on_empty
+      method: row
+
+  # Faculty type (D7 list_text 'rank' -> D10 list_string, keys preserved).
+  field_profile_fac_type: rank
+
+  # Single-line summary (D7 text -> D10 string).
+  field_profile_fac_specialty: field_summary_of_specialty_area
+
+  # Long-form sections (D7 text_long -> D10 text_long, full_html).
+  field_profile_fac_career_int:
+    plugin: sub_process
+    source: career_interests
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: full_html
+  field_profile_fac_education:
+    plugin: sub_process
+    source: osu_faculty_education
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: full_html
+  field_profile_fac_courses:
+    plugin: sub_process
+    source: osu_faculty_courses_taught
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: full_html
+  field_profile_fac_awards:
+    plugin: sub_process
+    source: osu_faculty_honors_and_awards
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: full_html
+  field_profile_fac_additional:
+    plugin: sub_process
+    source: osu_faculty_additional_info
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: full_html
+  field_profile_fac_employment:
+    plugin: sub_process
+    source: osu_faculty_employment
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: full_html
+  field_profile_fac_affiliations:
+    plugin: sub_process
+    source: osu_faculty_affiliations
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: full_html
+  field_profile_fac_service:
+    plugin: sub_process
+    source: osu_faculty_service
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: full_html
+  field_profile_fac_presentations:
+    plugin: sub_process
+    source: osu_faculty_presentations
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: full_html
+
+  # Career links (D7 link_field, multi).
+  field_profile_fac_career_links:
+    plugin: sub_process
+    source: career_links
+    process:
+      uri: url
+      title: title
+
+  # User references -> osu_profile nodes.
+  field_profile_fac_grads:
+    plugin: sub_process
+    source: field_graduate_students
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_user_to_profile
+          source: target_id
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+  field_profile_fac_lab_group:
+    plugin: sub_process
+    source: field_lab_grouop
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_user_to_profile
+          source: target_id
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+
+  type:
+    plugin: default_value
+    default_value: osu_profile
+
+destination:
+  plugin: 'entity:node'
+  default_bundle: osu_profile
+  overwrite_properties:
+    - field_profile_fac_type
+    - field_profile_fac_specialty
+    - field_profile_fac_career_int
+    - field_profile_fac_education
+    - field_profile_fac_courses
+    - field_profile_fac_awards
+    - field_profile_fac_additional
+    - field_profile_fac_employment
+    - field_profile_fac_affiliations
+    - field_profile_fac_service
+    - field_profile_fac_presentations
+    - field_profile_fac_career_links
+    - field_profile_fac_grads
+    - field_profile_fac_lab_group
+
+migration_dependencies:
+  required:
+    - upgrade_d7_user_to_profile

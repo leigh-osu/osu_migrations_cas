@@ -1,0 +1,66 @@
+langcode: en
+status: true
+id: cas_user_profile_osu_student
+label: 'CAS OSU Student profile - additional fields'
+migration_group: content
+dependencies: {  }
+migration_tags:
+  - Drupal 7
+  - OSU
+  - CAS
+  - CAS Content
+source:
+  plugin: d7_osu_profile2
+  profile2_type: osu_student
+process:
+  nid:
+    - plugin: migration_lookup
+      migration: upgrade_d7_user_to_profile
+      source: uid
+      no_stub: true
+    - plugin: skip_on_empty
+      method: row
+
+  # Majors (D7 text, multi -> D10 string, multi).
+  field_profile_stu_majors: majors
+
+  # Academic interests (D7 text_long -> D10 text_long).
+  field_profile_stu_ac_interests:
+    plugin: sub_process
+    source: academic_interests
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: full_html
+
+  # Major professor (D7 user reference -> osu_profile nodes).
+  field_profile_stu_major_prof:
+    plugin: sub_process
+    source: field_major_professor
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: upgrade_d7_user_to_profile
+          source: target_id
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+
+  type:
+    plugin: default_value
+    default_value: osu_profile
+
+destination:
+  plugin: 'entity:node'
+  default_bundle: osu_profile
+  overwrite_properties:
+    - field_profile_stu_majors
+    - field_profile_stu_ac_interests
+    - field_profile_stu_major_prof
+
+migration_dependencies:
+  required:
+    - upgrade_d7_user_to_profile

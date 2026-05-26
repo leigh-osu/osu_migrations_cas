@@ -1,0 +1,71 @@
+langcode: en
+status: true
+id: cas_user_profile_agricultural_sciences
+label: 'CAS Agricultural Sciences profile - additional fields'
+migration_group: content
+dependencies: {  }
+migration_tags:
+  - Drupal 7
+  - OSU
+  - CAS
+  - CAS Content
+source:
+  plugin: d7_osu_profile2
+  profile2_type: agricultural_sciences
+process:
+  nid:
+    - plugin: migration_lookup
+      migration: upgrade_d7_user_to_profile
+      source: uid
+      no_stub: true
+    - plugin: skip_on_empty
+      method: row
+
+  # Accept-grad-students (D7 list_text, multi -> D10 list_string, multi).
+  field_profile_fac_accept_grad: field_do_you_accept_grad_student
+
+  # Advise nonthesis (D7 list_boolean -> D10 boolean).
+  field_profile_fac_nonthesis: field_do_you_advise_nonthesis_st
+
+  # Outreach & extension (D7 text_long -> D10 text_long).
+  field_profile_fac_outreach_ext:
+    plugin: sub_process
+    source: field_outreach_and_extension
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: full_html
+
+  # Faculty expertise (D7 taxonomy_term_reference -> D10 taxonomy reference).
+  field_tax_faculty_expertise:
+    plugin: sub_process
+    source: field_faculty_expertise
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: 'upgrade_d7_taxonomy_terms:faculty_expertise'
+          source: tid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+
+  type:
+    plugin: default_value
+    default_value: osu_profile
+
+destination:
+  plugin: 'entity:node'
+  default_bundle: osu_profile
+  overwrite_properties:
+    - field_profile_fac_accept_grad
+    - field_profile_fac_nonthesis
+    - field_profile_fac_outreach_ext
+    - field_tax_faculty_expertise
+
+migration_dependencies:
+  required:
+    - upgrade_d7_user_to_profile
+    - 'upgrade_d7_taxonomy_terms:faculty_expertise'

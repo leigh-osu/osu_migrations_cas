@@ -1,0 +1,112 @@
+langcode: en
+status: true
+id: cas_user_profile_osu_person
+label: 'CAS OSU Person profile - additional fields'
+migration_group: content
+dependencies: {  }
+migration_tags:
+  - Drupal 7
+  - OSU
+  - CAS
+  - CAS Content
+source:
+  plugin: d7_osu_profile2
+  profile2_type: osu_person
+process:
+  # Update the osu_profile node created from this user account.
+  nid:
+    - plugin: migration_lookup
+      migration: upgrade_d7_user_to_profile
+      source: uid
+      no_stub: true
+    - plugin: skip_on_empty
+      method: row
+
+  # Name extras (existing string fields, not mapped by the generic migration).
+  field_profile_preferred_name: preferred_name
+  field_profile_pronouns: field_person_pronouns
+  field_profile_name_suffix:
+    - plugin: static_map
+      source: suffix_name/0/value
+      map:
+        '01': Sr.
+        '02': Jr.
+        '03': I
+        '04': II
+        '05': III
+      default_value: ''
+
+  # Text long.
+  field_profile_personal_interests:
+    plugin: sub_process
+    source: personal_interests
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: full_html
+
+  # Link fields.
+  field_profile_personal_links:
+    plugin: sub_process
+    source: personal_links
+    process:
+      uri: url
+      title: title
+  field_profile_google_scholar:
+    plugin: sub_process
+    source: field_google_scholar
+    process:
+      uri: url
+      title: title
+  field_profile_researchgate:
+    plugin: sub_process
+    source: field_researchgate
+    process:
+      uri: url
+      title: title
+  field_profile_pub_med:
+    plugin: sub_process
+    source: field_pub_med
+    process:
+      uri: url
+      title: title
+  field_profile_pubs_website:
+    plugin: sub_process
+    source: field_pubs_website
+    process:
+      uri: url
+      title: title
+
+  # "Show this report" flags (D7 list_integer value 1 -> D10 boolean).
+  field_profile_dm_pubs: field_person_dm_publications
+  field_profile_dm_awards: field_person_dm_awards
+  field_profile_ext_pubs: field_person_ext_publications
+
+  type:
+    plugin: default_value
+    default_value: osu_profile
+
+destination:
+  plugin: 'entity:node'
+  default_bundle: osu_profile
+  # Update only these fields on the existing node; preserve langcode/title/etc.
+  overwrite_properties:
+    - field_profile_preferred_name
+    - field_profile_pronouns
+    - field_profile_name_suffix
+    - field_profile_personal_interests
+    - field_profile_personal_links
+    - field_profile_google_scholar
+    - field_profile_researchgate
+    - field_profile_pub_med
+    - field_profile_pubs_website
+    - field_profile_dm_pubs
+    - field_profile_dm_awards
+    - field_profile_ext_pubs
+
+migration_dependencies:
+  required:
+    - upgrade_d7_user_to_profile
