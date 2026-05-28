@@ -1,0 +1,33 @@
+langcode: en
+status: true
+id: cas_user_authmap
+label: 'CAS user login mappings (uid -> authmap, provider cas)'
+migration_group: insert_users
+dependencies: {  }
+migration_tags:
+  - Drupal 7
+  - OSU
+  - CAS
+  - CAS Accounts
+source:
+  # osu_cas_user gates on the cas_user table, not the (disabled) source cas
+  # module flag, so this runs durably across source re-imports.
+  plugin: osu_cas_user
+process:
+  uid:
+    - plugin: migration_lookup
+      migration: upgrade_d7_users_with_roles
+      no_stub: true
+      source: uid
+    - plugin: skip_on_empty
+      method: row
+      message: 'No migrated user for this uid; skipping CAS mapping.'
+  provider:
+    - plugin: default_value
+      default_value: cas
+  authname: cas_name
+destination:
+  plugin: authmap
+migration_dependencies:
+  required:
+    - upgrade_d7_users_with_roles

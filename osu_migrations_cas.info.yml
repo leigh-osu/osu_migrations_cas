@@ -10,3 +10,5 @@ dependencies:
   - osu_migrations:og_to_group
   - osu_migrations:osu_user_accounts
   - osu_migrations:osu_user_to_profiles
+  - cas:cas
+  - externalauth:externalauth
