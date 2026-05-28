@@ -27,6 +27,24 @@ function osu_migrations_cas_migration_plugins_alter(array &$migrations) {
   foreach ($migrations as &$migration) {
     $id = $migration['id'] ?? NULL;
 
+    // Menu config: do not migrate OG menus as standalone D10 menus -- they are
+    // migrated into per-group menus by cas_og_menu_group_menu. Skipping them
+    // here also makes upgrade_d7_menu_links skip their links (its menu_name
+    // lookup against upgrade_d7_menu returns empty -> skip_on_empty), so the OG
+    // links land only in the group menus and ~184 empty "menu-og-*" menus are
+    // never created. (Book-toc menus are already excluded by OsuMenuFiltered.)
+    if ($id === 'upgrade_d7_menu' && isset($migration['process']['id'])) {
+      $orig = $migration['process']['id'];
+      // The original is a single static_map step keyed on menu_name; turn it
+      // into a pipeline that first skips OG menus, then maps as before. The
+      // skip step provides the source, so drop it from the map step.
+      unset($orig['source']);
+      $migration['process']['id'] = [
+        ['plugin' => 'cas_skip_og_menu', 'source' => 'menu_name'],
+        $orig,
+      ];
+    }
+
     // Menu links: stop core LinkUri from failing whole rows when a D7 path
     // does not resolve to a route at migration time.
     if ($id === 'upgrade_d7_menu_links' && !empty($migration['process']['link/uri'])) {
@@ -59,6 +77,51 @@ function osu_migrations_cas_migration_plugins_alter(array &$migrations) {
           'source' => 'source',
         ],
       ];
+    }
+
+    // Book-to-group menus: the base migration in osu_migrations/og_to_group
+    // declares required deps on upgrade_d7_book_group_content /
+    // upgrade_d7_page_group_content, which this project never runs (it migrates
+    // book/page group content via the cas_* equivalents). The requirements
+    // gate then blocks the whole migration. The og_book_menu process plugin
+    // does NOT use those migrations' map data — it resolves groups from the D7
+    // source + the migrated group entities — so we repoint the required deps at
+    // the cas_* migrations that actually run. Also disable link_uri route
+    // validation (same reason as upgrade_d7_menu_links).
+    if ($id === 'upgrade_d7_book_menu_group_menu') {
+      if (!empty($migration['migration_dependencies']['required'])) {
+        $req = &$migration['migration_dependencies']['required'];
+        $swap = [
+          'upgrade_d7_book_group_content' => 'cas_book_group_content',
+          'upgrade_d7_page_group_content' => 'cas_page_group_content',
+        ];
+        foreach ($req as &$dep) {
+          if (isset($swap[$dep])) {
+            $dep = $swap[$dep];
+          }
+        }
+        unset($dep);
+        $req = array_values(array_unique($req));
+        unset($req);
+      }
+
+      if (!empty($migration['process']['link/uri'])) {
+        $link_uri = &$migration['process']['link/uri'];
+        if (isset($link_uri['plugin'])) {
+          if ($link_uri['plugin'] === 'link_uri') {
+            $link_uri['validate_route'] = FALSE;
+          }
+        }
+        else {
+          foreach ($link_uri as &$step) {
+            if (is_array($step) && ($step['plugin'] ?? NULL) === 'link_uri') {
+              $step['validate_route'] = FALSE;
+            }
+          }
+          unset($step);
+        }
+        unset($link_uri);
+      }
     }
   }
   unset($migration);
