@@ -111,11 +111,11 @@ class CasParagraphsLayout extends CasLayoutBase {
             $components = $this->createComponent($migrationItem, $section, $migration_row);
 
             //add classes to row that will be seen in LayoutBuilder UI
+            // Backgrounds are set from the row block data in
+            // CasLayoutBase::setAdjustableColumnsSectionSettings().
             if ($type == "lp_adjustable_columns") {
               $layout_settings = $section->getLayoutSettings();
               $layout_settings['regions_classes']['blb_region_col_1'] = 'd-flex flex-wrap';
-              $layout_settings['container_wrapper']['bootstrap_styles']['background']['background_type'] = 'color';
-              $layout_settings['container_wrapper']['bootstrap_styles']['background_color']['class'] = '--bs-pink';
               $section->setLayoutSettings($layout_settings);
             }
 

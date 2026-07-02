@@ -386,13 +386,13 @@ class CasLayoutBase extends LayoutBase {
   protected function handleAdjustableColumnsItems($block, $section, $row, $item) {
     // top block is the controlling row element
     $row_extra_data = unserialize($block->get('field_block_serialized_data')->value);
-    $block_ids = explode(',', $row_extra_data['migration']['adjustable_columns_section']['attached_block_ids']);
+    $row_data = $row_extra_data['migration']['adjustable_columns_section'];
+    $block_ids = explode(',', $row_data['attached_block_ids']);
     $components = [];
 
-    // set row attributes from top block
-    $row_additional_settings = [];
-    $row_additional_settings['container_wrapper']['bootstrap_styles']['background_color']['class'] = 'osu-bg-black';
-
+    // Apply row-level settings (background, etc.) from the top block to the
+    // section itself.
+    $this->setAdjustableColumnsSectionSettings($section, $row_data);
 
     //now deal with the attached blocks
     foreach ($block_ids as $index => $block_id) {
@@ -400,7 +400,6 @@ class CasLayoutBase extends LayoutBase {
       $attached_block_extra_data = unserialize($attached_block->get('field_block_serialized_data')->value);
       $block_revision_id = $this->blockContentStorage->getLatestRevisionId($block_id);
       $block_type = 'paragraph_block';
-//      $component = $this->createSectionComponent($block_type, $block_revision_id, $row, [], $index);
 
       $attached_block_additional_settings = [];
       $elements = [
@@ -411,10 +410,10 @@ class CasLayoutBase extends LayoutBase {
 
       foreach ($elements as $element) {
         $attached_block_additional_settings['component_attributes'][$element] = [
-          'id' => $values[$element]['id'] ?? '',
-          'class' => $values[$element]['class'] ?? '',
-          'style' => $values[$element]['style'] ?? '',
-          'data' => $values[$element]['data'] ?? '',
+          'id' => '',
+          'class' => '',
+          'style' => '',
+          'data' => '',
         ];
       }
 
@@ -486,13 +485,93 @@ class CasLayoutBase extends LayoutBase {
 //      'field_lp_col_view',
 //      'field_lp_col_block'
 
-      $additional_settings = array_merge($row_additional_settings, $attached_block_additional_settings);
-      $component = $this->createSectionComponent($block_type, $block_revision_id, $row, $additional_settings, $index);
+      $component = $this->createSectionComponent($block_type, $block_revision_id, $row, $attached_block_additional_settings, $index);
 
       $components[] = $component;
     }
 
     return $components;
+  }
+
+  /**
+   * Applies row-level adjustable columns settings to the section.
+   *
+   * @param \Drupal\layout_builder\Section $section
+   *   The layout builder section the row settings apply to.
+   * @param array $row_data
+   *   The unserialized adjustable_columns_section migration data from the
+   *   controlling row block.
+   */
+  protected function setAdjustableColumnsSectionSettings(Section $section, array $row_data): void {
+    $settings = $section->getLayoutSettings();
+
+    // Background video takes precedence, matching D7 where the video was
+    // rendered over the row background. Resolved to a local video media id at
+    // migrate time by the cas_adjustable_columns_section process plugin.
+    if (!empty($row_data['field_lp_background_video']) && is_scalar($row_data['field_lp_background_video'])) {
+      $settings['container_wrapper']['bootstrap_styles']['background']['background_type'] = 'video';
+      $settings['container_wrapper']['bootstrap_styles']['background_media']['video']['media_id'] = (string) $row_data['field_lp_background_video'];
+    }
+    // Entity background, resolved to "mid,image|parallax" at migrate time by
+    // the cas_adjustable_columns_section process plugin.
+    elseif (!empty($row_data['eb_background']) && is_string($row_data['eb_background'])) {
+      $eb_fc = explode(',', $row_data['eb_background']);
+      $eb_fc_id = $eb_fc[0];
+      $eb_fc_type = ($eb_fc[1] ?? '') === 'parallax' ? 'fixed' : 'not_fixed';
+      $settings['container_wrapper']['bootstrap_styles']['background']['background_type'] = 'image';
+      $settings['container_wrapper']['bootstrap_styles']['background_media']['image']['media_id'] = $eb_fc_id;
+      $settings['container_wrapper']['bootstrap_styles']['background_media']['background_options'] = [
+        'background_position' => 'center',
+        'background_repeat' => 'no-repeat',
+        'background_attachment' => $eb_fc_type,
+        'background_size' => 'cover',
+      ];
+    }
+    elseif (isset($row_data['field_lp_background_color'][0]['value'])) {
+      $background_color = str_replace('larch-', 'cas-', $row_data['field_lp_background_color'][0]['value']);
+      $settings['container_wrapper']['bootstrap_styles']['background']['background_type'] = 'color';
+      $settings['container_wrapper']['bootstrap_styles']['background_color']['class'] = $background_color;
+    }
+
+    // Row padding, min-height and styles were free-form CSS values rendered
+    // as inline styles on the row in D7 (see larch
+    // paragraphs-item--lp-adjustable-columns.tpl.php), so carry them over
+    // verbatim as inline styles on the section container wrapper — the same
+    // element that gets the background above. Row classes go on the wrapper
+    // as classes, also matching the D7 template.
+    $styles = [];
+    if (isset($row_data['field_lp_row_padding'][0]['value']) && trim($row_data['field_lp_row_padding'][0]['value']) !== '') {
+      $styles[] = 'padding: ' . trim($row_data['field_lp_row_padding'][0]['value']) . ';';
+    }
+    if (isset($row_data['field_lp_row_min_height'][0]['value']) && trim($row_data['field_lp_row_min_height'][0]['value']) !== '') {
+      $styles[] = 'min-height: ' . trim($row_data['field_lp_row_min_height'][0]['value']) . ';';
+    }
+    // Multiple value field: each style value gets a trailing ";" if missing.
+    foreach ($row_data['field_lp_row_style'] ?? [] as $style_item) {
+      $style = trim($style_item['value'] ?? '');
+      if ($style !== '') {
+        $styles[] = str_ends_with($style, ';') ? $style : $style . ';';
+      }
+    }
+    if ($styles) {
+      // Must be an array: bootstrap_styles appends to the style attribute
+      // with [] (see BackgroundMedia::build()), which fatals on a string.
+      $settings['container_wrapper_attributes']['style'] = $styles;
+    }
+
+    // Multiple value field: each class value is a wrapper class.
+    $classes = [];
+    foreach ($row_data['field_lp_row_class'] ?? [] as $class_item) {
+      $class = trim($class_item['value'] ?? '');
+      if ($class !== '') {
+        $classes[] = $class;
+      }
+    }
+    if ($classes) {
+      $settings['container_wrapper_attributes']['class'] = $classes;
+    }
+
+    $section->setLayoutSettings($settings);
   }
 
   /**
