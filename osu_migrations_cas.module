@@ -123,6 +123,41 @@ function osu_migrations_cas_migration_plugins_alter(array &$migrations) {
         unset($link_uri);
       }
     }
+
+    // Webforms: webform_migrate's d7_webform requires d7_user_role, but this
+    // project never runs a role migration -- D10 roles come from the partial
+    // config imports, and the D7Webform source maps webform_roles rows to role
+    // machine names on its own (rid 1/2 hardcoded, others lowercased from the
+    // D7 role name) without touching the d7_user_role map. Drop the dep so the
+    // requirements gate does not block the migration.
+    if ($id === 'd7_webform' && !empty($migration['migration_dependencies']['required'])) {
+      $migration['migration_dependencies']['required'] = array_values(array_diff(
+        $migration['migration_dependencies']['required'],
+        ['d7_user_role']
+      ));
+    }
+
+    // Webform submissions: the D7 webform_submissions table contains orphaned
+    // rows for webform nodes deleted in D7 (e.g. nid 244, 3 submissions), so
+    // d7_webform never creates their webform config entity. The stock process
+    // maps webform_id straight from the source ('webform_<nid>'), and the
+    // webform module fatals in WebformSubmission::preCreate() when that
+    // webform does not exist. Resolve webform_id through the d7_webform map
+    // instead and drop rows with no match.
+    if ($id === 'd7_webform_submission') {
+      $migration['process']['webform_id'] = [
+        [
+          'plugin' => 'migration_lookup',
+          'migration' => 'd7_webform',
+          'source' => 'nid',
+          'no_stub' => TRUE,
+        ],
+        [
+          'plugin' => 'skip_on_empty',
+          'method' => 'row',
+        ],
+      ];
+    }
   }
   unset($migration);
 }

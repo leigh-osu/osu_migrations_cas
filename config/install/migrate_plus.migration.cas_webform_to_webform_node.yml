@@ -1,0 +1,81 @@
+langcode: en
+status: true
+id: cas_webform_to_webform_node
+label: 'Webform Node Content Migration'
+migration_group: content
+dependencies: { }
+migration_tags:
+  - Drupal 7
+  - Content
+  - OSU
+  - CAS
+  - CAS Content
+  - CAS Webform
+source:
+  plugin: d7_node_domain_access
+  node_type: webform
+  high_water_property:
+    name: changed
+process:
+
+  body:
+    - plugin: sub_process
+      source: body
+      process:
+        value:
+          plugin: osu_media_wysiwyg_filter
+          source: value
+        summary: summary
+        format:
+          plugin: default_value
+          default_value: 'full_html'
+
+  path/pathauto:
+    plugin: default_value
+    default_value: 0
+
+  type:
+    plugin: default_value
+    default_value: webform
+
+  # d7_webform keys webform entities by the D7 node id, so the lookup wires
+  # each node to its own form. skip_on_empty guards the property (not the
+  # row): a node whose form did not migrate still migrates, just without an
+  # attached form.
+  webform/target_id:
+    - plugin: migration_lookup
+      migration: d7_webform
+      no_stub: true
+      source: nid
+    - plugin: skip_on_empty
+      method: process
+
+  # Field-level status overrides the webform entity status on the node, and
+  # D7 has no per-node equivalent -- mirror the entity status so the 3 closed
+  # forms stay closed.
+  webform/status:
+    - plugin: migration_lookup
+      migration: d7_webform
+      no_stub: true
+      source: nid
+    - plugin: cas_webform_node_status
+
+  field_domain_access:
+    - plugin: sub_process
+      source: domain_access_node
+      process:
+        target_id: target_id
+  field_domain_all_affiliates:
+    - plugin: get
+      source: domain_all_affiliates
+
+destination:
+  plugin: 'entity:node'
+  bundle: webform
+
+migration_dependencies:
+  required:
+    - d7_webform
+    - upgrade_d7_files
+    - upgrade_d7_users_with_roles
+    - upgrade_d7_media_images

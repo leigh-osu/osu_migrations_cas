@@ -228,7 +228,7 @@ process:
         migration: upgrade_d7_taxonomy_terms:turf
         source: tid
 
-  field_tax_vegetable_topics:
+  field_tax_veg_topics:
     plugin: sub_process
     source: field_veg_tags
     process:
