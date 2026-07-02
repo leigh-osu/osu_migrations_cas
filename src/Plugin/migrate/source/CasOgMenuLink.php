@@ -7,11 +7,12 @@ use Drupal\menu_link_content\Plugin\migrate\source\MenuLink;
 /**
  * Drupal 7 OG menu link source.
  *
- * Returns the D7 menu links that belong to an Organic Groups menu. Rather than
- * matching on the conventional `menu-og-<gid>` name, this restricts to every
- * menu listed in the D7 {og_menu} table (which also covers custom-named group
- * menus such as `menu-about-cas` or `menu-academics`), while excluding the
- * standard system menus that may also appear there.
+ * Returns the D7 menu links that belong to a group's canonical Organic Groups
+ * menu. A group's canonical menu is `menu-og-<gid>` when it exists, otherwise
+ * its only non-system OG menu (which covers custom-named group menus such as
+ * `menu-about-cas`). Groups can own additional OG menus (e.g. The Source's
+ * per-issue menus); those are NOT part of the group nav and are migrated to
+ * standalone menus by cas_og_extra_menu / cas_og_extra_menu_links instead.
  *
  * @MigrateSource(
  *   id = "cas_og_menu_link",
@@ -20,31 +21,15 @@ use Drupal\menu_link_content\Plugin\migrate\source\MenuLink;
  */
 class CasOgMenuLink extends MenuLink {
 
-  /**
-   * System menus that must never be treated as group menus.
-   */
-  protected const SYSTEM_MENUS = [
-    'main-menu',
-    'navigation',
-    'management',
-    'user-menu',
-    'tools',
-    'admin',
-    'account',
-    'devel',
-    'footer',
-  ];
+  use CasOgMenuCanonicalTrait;
 
   /**
    * {@inheritDoc}
    */
   public function query() {
     $query = parent::query();
-    // Restrict to menu names registered as OG menus in the source site.
-    $og_menus = $this->select('og_menu', 'om')->fields('om', ['menu_name']);
-    $query->condition('ml.menu_name', $og_menus, 'IN');
-    // Never migrate global/system menus as group menus.
-    $query->condition('ml.menu_name', self::SYSTEM_MENUS, 'NOT IN');
+    // Restrict to each group's canonical OG menu.
+    $query->condition('ml.menu_name', $this->getCanonicalOgMenuNames(), 'IN');
     return $query;
   }
 
