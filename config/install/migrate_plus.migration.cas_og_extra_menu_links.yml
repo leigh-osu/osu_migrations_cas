@@ -1,0 +1,69 @@
+langcode: en
+status: true
+dependencies: {  }
+id: cas_og_extra_menu_links
+migration_tags:
+  - Drupal 7
+  - OSU Group Menu
+  - OSU Groups
+  - OSU
+  - CAS
+migration_group: osu_groups
+label: 'Migrate extra D7 OG menu links to standalone menus'
+source:
+  plugin: cas_og_extra_menu_link
+  constants:
+    bundle: menu_link_content
+process:
+  skip_translation:
+    plugin: skip_on_empty
+    method: row
+    source: skip_translation
+  id: mlid
+  langcode:
+    plugin: default_value
+    source: language
+    default_value: und
+  bundle: 'constants/bundle'
+  title: link_title
+  description: description
+  # The D10 menu keeps the D7 menu_name (see cas_og_extra_menu).
+  menu_name: menu_name
+  'link/uri':
+    plugin: link_uri
+    source: link_path
+    # D7 menu links often store URL-alias paths (e.g. /degrees/undergraduate) or
+    # stale node paths that are not valid D10 routes at migrate time. Skip route
+    # validation so these import as internal links and resolve at render time
+    # (via the migrated aliases) instead of failing the row.
+    validate_route: false
+  'link/options': options
+  route:
+    plugin: route
+    source:
+      - link_path
+      - options
+  route_name: '@route/route_name'
+  route_parameters: '@route/route_parameters'
+  url: '@route/url'
+  options: '@route/options'
+  external: external
+  weight: weight
+  expanded: expanded
+  enabled: enabled
+  parent:
+    plugin: menu_link_parent
+    source:
+      - plid
+      - '@menu_name'
+      - parent_link_path
+  changed: updated
+destination:
+  plugin: entity:menu_link_content
+  no_stub: true
+migration_dependencies:
+  required:
+    - cas_og_extra_menu
+  optional:
+    - cas_page_to_page
+    - cas_book_to_page

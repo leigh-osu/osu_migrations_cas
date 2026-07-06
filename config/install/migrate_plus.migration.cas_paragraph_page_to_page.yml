@@ -42,6 +42,7 @@ source:
       paragraph_menu: 'paragraph_menu__to__layout_builder'
       lp_vertical_tabs: 'paragraph_lp_vertical_tabs__to__layout_builder'
       lp_picbox_grid: 'paragraph_lp_picbox_grid__to__layout_builder'
+      1_column_background_video: 'paragraph_1_column_background_video__to__layout_builder'
       lp_adjustable_columns: 'paragraph_lp_adjustable_columns__to__layout_builder'
 process:
 
@@ -148,3 +149,4 @@ migration_dependencies:
     - paragraph_lp_vertical_tabs__to__layout_builder
     - paragraph_lp_picbox_grid__to__layout_builder
     - paragraph_lp_adjustable_columns__to__layout_builder
+    - paragraph_1_column_background_video__to__layout_builder

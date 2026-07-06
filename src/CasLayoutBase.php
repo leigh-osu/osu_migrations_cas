@@ -51,6 +51,7 @@ class CasLayoutBase extends LayoutBase {
     // resolves this to the underlying Layout Builder plugin (blb_col_2).
     return match ($paragraphType) {
       "paragraph_1_col",
+      "1_column_background_video",
       "paragraph_3_col" => "bootstrap_layout_builder:blb_col_3_three_equal_columns",
       "4_column",
       "paragraph_menu" => "bootstrap_layout_builder:blb_col_4_four_equal_columns",
@@ -296,8 +297,10 @@ class CasLayoutBase extends LayoutBase {
       return $this->handleAdjustableColumnsItems($block, $section, $row, $item);
     }
 
-    // Set column settings for 1_col.
-    if ($item->getMigrationId() === 'paragraph_1_col__to__layout_builder') {
+    // Set column settings for 1_col (and its background-video variant, which
+    // shares the same content field and p-left/p-right styles vocabulary).
+    if ($item->getMigrationId() === 'paragraph_1_col__to__layout_builder'
+      || $item->getMigrationId() === 'paragraph_1_column_background_video__to__layout_builder') {
       if ($block->get('field_styles')->value != NULL) {
         if (str_contains($block->get('field_styles')->value, 'left')) {
           $row = 'blb_region_col_1';
@@ -703,7 +706,7 @@ class CasLayoutBase extends LayoutBase {
         ],
       ];
     }
-    elseif ($item->getType() == 'paragraph_1_col') {
+    elseif ($item->getType() == 'paragraph_1_col' || $item->getType() == '1_column_background_video') {
       if ($block->get('body')->value !== NULL) {
         $additional = [
           'bootstrap_styles' => [
@@ -851,6 +854,17 @@ class CasLayoutBase extends LayoutBase {
           'background_attachment' => $eb_fc_type,
           'background_size' => 'cover',
         ];
+        $settings['container_wrapper']['bootstrap_styles']['items_alignment']['class'] = 'osu-align-items-center';
+        $settings['container_wrapper']['bootstrap_styles']['min_height'] = ['class' => 'osu-min-h-600'];
+        $section->setLayoutSettings($settings);
+      }
+    }
+    elseif ($item->getType() === '1_column_background_video') {
+      // paragraph_1_col variant with a video background; the block holds the
+      // resolved local_video media id (see the migration yml).
+      if ($block->get('field_eb_background_fc')->value !== NULL) {
+        $settings['container_wrapper']['bootstrap_styles']['background']['background_type'] = 'video';
+        $settings['container_wrapper']['bootstrap_styles']['background_media']['video']['media_id'] = $block->get('field_eb_background_fc')->value;
         $settings['container_wrapper']['bootstrap_styles']['items_alignment']['class'] = 'osu-align-items-center';
         $settings['container_wrapper']['bootstrap_styles']['min_height'] = ['class' => 'osu-min-h-600'];
         $section->setLayoutSettings($settings);

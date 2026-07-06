@@ -61,7 +61,7 @@ class CasParagraphsLayout extends CasLayoutBase {
 
     $values = $row->getSourceProperty($sourceField);
     $map = $row->getSource()['constants']['map'];
-    $ignored_bundles = ['viewfield', '2_column_views', '1_column_background_video'];
+    $ignored_bundles = ['viewfield', '2_column_views'];
     $sections = [];
     if (is_array($values)) {
       foreach ($values as $delta => $item) {
