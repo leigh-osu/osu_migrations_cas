@@ -29,6 +29,55 @@ use Drupal\paragraphs_to_layout_builder\LayoutMigrationItem;
 class CasLayoutBase extends LayoutBase {
 
   /**
+   * Maps D7 larch background classes to manzanita cas-bg-* classes.
+   *
+   * Class suffixes mirror the variable names in manzanita's
+   * _cas_variables.scss and madrone's _osu_variables.scss, hyphenated
+   * (e.g. $rogue_wave-400 -> cas-bg-rogue-wave-400). The classes are
+   * generated from the $cas-bg-colors map in manzanita's
+   * components/_cas_backgrounds.scss.
+   */
+  protected const LARCH_BACKGROUND_CLASS_MAP = [
+    'larch-bg-orange' => 'cas-bg-osuorange',
+    'larch-bg-white' => 'cas-bg-bucktoothwhite',
+    'larch-bg-trans-white' => 'cas-bg-trans-white',
+    'larch-bg-black' => 'cas-bg-black',
+    'larch-bg-trans-black' => 'cas-bg-trans-black',
+    'larch-bg-red' => 'cas-bg-alert-red',
+    'larch-bg-pinestand' => 'cas-bg-pine-400',
+    'larch-bg-hightide' => 'cas-bg-rogue-wave-400',
+    'larch-bg-luminance' => 'cas-bg-luminance-400',
+    'larch-bg-stratosphere' => 'cas-bg-stratosphere',
+    'larch-bg-reindeermoss' => 'cas-bg-pine-200',
+    'larch-bg-seafoam' => 'cas-bg-rogue-wave-200',
+    'larch-bg-candela' => 'cas-bg-candela',
+    'larch-bg-moondust' => 'cas-bg-moondust',
+    'larch-bg-hopbine' => 'cas-bg-hop-bine',
+    'larch-bg-roguewave' => 'cas-bg-rogue-wave-600',
+    'larch-bg-solarflare' => 'cas-bg-luminance-600',
+    'larch-bg-starcanvas' => 'cas-bg-stratosphere-600',
+    'larch-bg-till' => 'cas-bg-till',
+    'larch-bg-coastline' => 'cas-bg-coastline',
+    'larch-bg-highdesert' => 'cas-bg-high-desert',
+    'larch-bg-crater' => 'cas-bg-crater',
+  ];
+
+  /**
+   * Translates a D7 larch background class to its manzanita class.
+   *
+   * @param string $larch_class
+   *   The field_lp_background_color / field_lp_col_bg_color value.
+   *
+   * @return string
+   *   The manzanita cas-bg-* class; unknown values fall back to a plain
+   *   larch- to cas- prefix swap so they remain identifiable in markup.
+   */
+  protected static function mapLarchBackgroundClass(string $larch_class): string {
+    return self::LARCH_BACKGROUND_CLASS_MAP[$larch_class]
+      ?? str_replace('larch-', 'cas-', $larch_class);
+  }
+
+  /**
    * Maps paragraph bundle type to bootstrap layout builder section type.
    *
    * @param string $paragraphType
@@ -477,7 +526,7 @@ class CasLayoutBase extends LayoutBase {
 
       //backgrounds
       if (isset($attached_block_extra_data['migration']['adjustable_columns_item']['field_lp_col_bg_color'][0]['value'])) {
-        $background_color = str_replace('larch-', 'cas-', $attached_block_extra_data['migration']['adjustable_columns_item']['field_lp_col_bg_color'][0]['value']);
+        $background_color = self::mapLarchBackgroundClass($attached_block_extra_data['migration']['adjustable_columns_item']['field_lp_col_bg_color'][0]['value']);
         $attached_block_additional_settings['bootstrap_styles']['block_style']['background']['background_type'] = 'color';
         $attached_block_additional_settings['bootstrap_styles']['block_style']['background_color']['class'] = $background_color;
       }
@@ -531,7 +580,7 @@ class CasLayoutBase extends LayoutBase {
       ];
     }
     elseif (isset($row_data['field_lp_background_color'][0]['value'])) {
-      $background_color = str_replace('larch-', 'cas-', $row_data['field_lp_background_color'][0]['value']);
+      $background_color = self::mapLarchBackgroundClass($row_data['field_lp_background_color'][0]['value']);
       $settings['container_wrapper']['bootstrap_styles']['background']['background_type'] = 'color';
       $settings['container_wrapper']['bootstrap_styles']['background_color']['class'] = $background_color;
     }
