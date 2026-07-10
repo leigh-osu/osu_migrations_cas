@@ -17,7 +17,10 @@ process:
   type:
     plugin: default_value
     default_value: 'osu_card'
-  info: field_paragraph_label
+  info:
+    source: field_paragraph_label
+    plugin: default_value
+    default_value: 'Migrated d7 field_lp_picbox card'
   body:
     - plugin: sub_process
       source: field_lp_picbox_box_description

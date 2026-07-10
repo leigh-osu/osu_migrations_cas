@@ -22,7 +22,10 @@ process:
   type:
     plugin: default_value
     default_value: 'paragraph_block'
-  info: field_paragraph_label
+  info:
+    source: field_paragraph_label
+    plugin: default_value
+    default_value: 'Migrated d7 lp_picbox_grid section'
   body:
     - plugin: sub_process
       source: field_lp_picbox_header

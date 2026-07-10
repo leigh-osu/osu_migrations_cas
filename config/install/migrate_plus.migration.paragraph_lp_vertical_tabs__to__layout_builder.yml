@@ -27,6 +27,7 @@ process:
     source:
       - field_lp_vertical_tabset
   info:
+    source: field_paragraph_label
     plugin: default_value
     default_value: 'Migrated d7 paragraph lp_vertical_tabs'
   reusable:
