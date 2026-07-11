@@ -36,6 +36,7 @@ class CasMediaWysiwygFilter extends OsuMediaWysiwygFilter
 
     // Transform the text
     $text = $this->osuMediaEmbed->transformEmbedCode($text);
+    $text = CasLarchInlineClasses::mapText($text);
 
     // Add the image if it exists
     if (!empty($col_image) && isset($col_image[0]['fid'])) {

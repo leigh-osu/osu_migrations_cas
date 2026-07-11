@@ -120,7 +120,10 @@ class CasParagraphsLayout extends CasLayoutBase {
             }
 
             // Limitations on menu migrations means we don't know what section type to use until now.
-            if ($components[0]->get('configuration')['id'] == 'inline_block:osu_menu_bar_item') {
+            // $components can be empty when every attached block of an
+            // adjustable-columns row was skipped as missing (see
+            // CasLayoutBase::handleAdjustableColumnsItems()).
+            if (!empty($components[0]) && $components[0]->get('configuration')['id'] == 'inline_block:osu_menu_bar_item') {
               // Query old db to get the menu bg color option.
               $menu_style_query = $this->migrateDb->select('field_data_field_p_menu_styles', 'fdfpms');
               $menu_style_query->fields('fdfpms', ['field_p_menu_styles_value']);

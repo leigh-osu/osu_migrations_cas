@@ -29,37 +29,38 @@ use Drupal\paragraphs_to_layout_builder\LayoutMigrationItem;
 class CasLayoutBase extends LayoutBase {
 
   /**
-   * Maps D7 larch background classes to manzanita cas-bg-* classes.
+   * Maps D7 larch background classes to native osu-bg-* classes.
    *
-   * Class suffixes mirror the variable names in manzanita's
-   * _cas_variables.scss and madrone's _osu_variables.scss, hyphenated
-   * (e.g. $rogue_wave-400 -> cas-bg-rogue-wave-400). The classes are
-   * generated from the $cas-bg-colors map in manzanita's
-   * components/_cas_backgrounds.scss.
+   * Targets are the brand background utilities editors see in the
+   * bootstrap_styles palette (osu_standard bootstrap_styles.settings):
+   * madrone generates most of them from its $osu-bg-colors map, and
+   * manzanita's components/_cas_backgrounds.scss generates the remainder
+   * ($osu-bg-colors-cas) using the same names and pattern. larch-bg-red is
+   * intentionally absent (zero uses in the D7 data); unknown values fall
+   * through mapLarchBackgroundClass()'s prefix swap.
    */
   protected const LARCH_BACKGROUND_CLASS_MAP = [
-    'larch-bg-orange' => 'cas-bg-osuorange',
-    'larch-bg-white' => 'cas-bg-bucktoothwhite',
-    'larch-bg-trans-white' => 'cas-bg-trans-white',
-    'larch-bg-black' => 'cas-bg-black',
-    'larch-bg-trans-black' => 'cas-bg-trans-black',
-    'larch-bg-red' => 'cas-bg-alert-red',
-    'larch-bg-pinestand' => 'cas-bg-pine-400',
-    'larch-bg-hightide' => 'cas-bg-rogue-wave-400',
-    'larch-bg-luminance' => 'cas-bg-luminance-400',
-    'larch-bg-stratosphere' => 'cas-bg-stratosphere',
-    'larch-bg-reindeermoss' => 'cas-bg-pine-200',
-    'larch-bg-seafoam' => 'cas-bg-rogue-wave-200',
-    'larch-bg-candela' => 'cas-bg-candela',
-    'larch-bg-moondust' => 'cas-bg-moondust',
-    'larch-bg-hopbine' => 'cas-bg-hop-bine',
-    'larch-bg-roguewave' => 'cas-bg-rogue-wave-600',
-    'larch-bg-solarflare' => 'cas-bg-luminance-600',
-    'larch-bg-starcanvas' => 'cas-bg-stratosphere-600',
-    'larch-bg-till' => 'cas-bg-till',
-    'larch-bg-coastline' => 'cas-bg-coastline',
-    'larch-bg-highdesert' => 'cas-bg-high-desert',
-    'larch-bg-crater' => 'cas-bg-crater',
+    'larch-bg-orange' => 'osu-bg-osuorange',
+    'larch-bg-white' => 'osu-bg-page-alt-1',
+    'larch-bg-trans-white' => 'osu-bg-trans-white',
+    'larch-bg-black' => 'osu-bg-black',
+    'larch-bg-trans-black' => 'osu-bg-trans-black',
+    'larch-bg-pinestand' => 'osu-bg-pine-stand',
+    'larch-bg-hightide' => 'osu-bg-high-tide',
+    'larch-bg-luminance' => 'osu-bg-luminance',
+    'larch-bg-stratosphere' => 'osu-bg-stratosphere',
+    'larch-bg-reindeermoss' => 'osu-bg-reindeer-moss',
+    'larch-bg-seafoam' => 'osu-bg-sea-foam',
+    'larch-bg-candela' => 'osu-bg-candela',
+    'larch-bg-moondust' => 'osu-bg-moondust',
+    'larch-bg-hopbine' => 'osu-bg-hop-bine',
+    'larch-bg-roguewave' => 'osu-bg-rogue-wave',
+    'larch-bg-solarflare' => 'osu-bg-solar-flare',
+    'larch-bg-starcanvas' => 'osu-bg-star-canvas',
+    'larch-bg-till' => 'osu-bg-till',
+    'larch-bg-coastline' => 'osu-bg-coastline',
+    'larch-bg-highdesert' => 'osu-bg-high-desert',
+    'larch-bg-crater' => 'osu-bg-crater',
   ];
 
   /**
@@ -69,12 +70,12 @@ class CasLayoutBase extends LayoutBase {
    *   The field_lp_background_color / field_lp_col_bg_color value.
    *
    * @return string
-   *   The manzanita cas-bg-* class; unknown values fall back to a plain
-   *   larch- to cas- prefix swap so they remain identifiable in markup.
+   *   The native osu-bg-* class; unknown values fall back to a plain
+   *   larch- to osu- prefix swap so they remain identifiable in markup.
    */
   protected static function mapLarchBackgroundClass(string $larch_class): string {
     return self::LARCH_BACKGROUND_CLASS_MAP[$larch_class]
-      ?? str_replace('larch-', 'cas-', $larch_class);
+      ?? str_replace('larch-', 'osu-', $larch_class);
   }
 
   /**
@@ -449,6 +450,16 @@ class CasLayoutBase extends LayoutBase {
     //now deal with the attached blocks
     foreach ($block_ids as $index => $block_id) {
       $attached_block = $this->entityTypeManager->getStorage('block_content')->load($block_id);
+      // A column item block can be missing when its own migration row failed
+      // (e.g. its media's source file was lost). Skip the column and keep the
+      // rest of the section rather than fataling the whole node import.
+      if (!$attached_block) {
+        \Drupal::logger('osu_migrations_cas')->warning(
+          'Adjustable columns item block @block_id missing while building @type @id; column skipped.',
+          ['@block_id' => $block_id, '@type' => $item->getType(), '@id' => $item->getId()]
+        );
+        continue;
+      }
       $attached_block_extra_data = unserialize($attached_block->get('field_block_serialized_data')->value);
       $block_revision_id = $this->blockContentStorage->getLatestRevisionId($block_id);
       $block_type = 'paragraph_block';
