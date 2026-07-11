@@ -37,12 +37,12 @@ process:
   body/format:
     plugin: default_value
     default_value: 'full_html'
-info:
-  plugin: default_value
-  default_value: 'Migrated d7 paragraph sacnas_officer_body_text'
-reusable:
-  plugin: default_value
-  default_value: 0
+  info:
+    plugin: default_value
+    default_value: 'Migrated d7 paragraph sacnas_officer_body_text'
+  reusable:
+    plugin: default_value
+    default_value: 0
 
 destination:
   plugin: entity:block_content
