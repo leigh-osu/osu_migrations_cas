@@ -159,14 +159,15 @@ function osu_migrations_cas_migration_plugins_alter(array &$migrations) {
       ];
     }
 
-    // Inline larch text-color classes (.osu-orange, .larch-white) live in
-    // editor-entered markup across node bodies, paragraph text fields and
-    // custom blocks. Every one of those fields already runs through
-    // osu_media_wysiwyg_filter, so rewrite the class names to manzanita's
-    // cas-text-* equivalents right after it in every pipeline. The CAS
-    // plugins that transform rich text internally (cas_media_wysiwyg_filter,
-    // cas_vertical_tabs_item, cas_accordian_item) call the same mapping
-    // themselves.
+    // Editor-entered markup needs two repairs: inline larch text-color
+    // classes (.osu-orange, .larch-white) become native osu-text-* names,
+    // and hardcoded /sites/agscid7/files/... URLs are rewritten to the D10
+    // files directory (copying unmanaged files from the D7 filesystem on
+    // demand). Every affected field already runs through
+    // osu_media_wysiwyg_filter, so both steps are inserted right after it
+    // in every pipeline. The CAS plugins that transform rich text
+    // internally (cas_media_wysiwyg_filter, cas_vertical_tabs_item,
+    // cas_accordian_item) call the same helpers themselves.
     if (!empty($migration['process']) && is_array($migration['process'])) {
       $migration['process'] = _osu_migrations_cas_map_inline_classes($migration['process']);
     }
@@ -209,6 +210,7 @@ function _osu_migrations_cas_map_inline_classes_pipeline(array $pipeline) {
     $result[] = $step;
     if (is_array($step) && ($step['plugin'] ?? NULL) === 'osu_media_wysiwyg_filter') {
       $result[] = ['plugin' => 'cas_larch_inline_classes'];
+      $result[] = ['plugin' => 'cas_legacy_file_paths'];
     }
   }
   return count($result) === 1 && $single ? $result[0] : $result;

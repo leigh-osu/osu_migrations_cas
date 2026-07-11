@@ -56,7 +56,7 @@ class CasVerticalTabsItem extends CasLayoutBase {
         // Get the current value.
         $bodyValue = $vertical_tab->field_lp_vert_tab_contents_value;
         // Pass it to our service to get the new embed value.
-        $transformedEmbedCode = CasLarchInlineClasses::mapText($this->osuMediaEmbed->transformEmbedCode($bodyValue));
+        $transformedEmbedCode = CasLegacyFilePaths::rewriteText(CasLarchInlineClasses::mapText($this->osuMediaEmbed->transformEmbedCode($bodyValue)));
         $vertical_tab_format = (isset($vertical_tab->field_lp_vert_tab_contents_format)) ? $vertical_tab->field_lp_vert_tab_contents_format : "full_html";
         if ($vertical_tab_format == 'filtered_html'){
           $vertical_tab_format = 'basic_html';

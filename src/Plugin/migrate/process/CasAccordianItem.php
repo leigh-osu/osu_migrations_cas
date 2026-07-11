@@ -57,7 +57,7 @@ class CasAccordianItem extends CasLayoutBase {
       // Create accordion items using title and body from d7.
       $paragraph_items = [];
       // Pass it to our service to get the new embed value.
-      $transformedEmbedCode = CasLarchInlineClasses::mapText($this->osuMediaEmbed->transformEmbedCode($accordian_body));
+      $transformedEmbedCode = CasLegacyFilePaths::rewriteText(CasLarchInlineClasses::mapText($this->osuMediaEmbed->transformEmbedCode($accordian_body)));
 
       $paragraph_items[] = Paragraph::create([
         'type' => 'osu_accordion_item',
