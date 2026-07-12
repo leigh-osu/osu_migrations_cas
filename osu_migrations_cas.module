@@ -159,6 +159,45 @@ function osu_migrations_cas_migration_plugins_alter(array &$migrations) {
       ];
     }
 
+    // Publications: the stock osu_biblio_reference source carries no domain
+    // data, so every migrated publication lost its D7 domain_access rows
+    // (the only content type affected — node migrations use
+    // d7_node_domain_access). Swap in the CAS subclass that adds the domain
+    // source properties and map them like cas_page_to_page does.
+    if ($id === 'upgrade_d7_biblio_publication'
+      && ($migration['source']['plugin'] ?? NULL) === 'osu_biblio_reference') {
+      $migration['source']['plugin'] = 'cas_biblio_reference_domain';
+      $migration['process']['field_domain_access'] = [
+        [
+          'plugin' => 'sub_process',
+          'source' => 'domain_access_node',
+          'process' => ['target_id' => 'target_id'],
+        ],
+      ];
+      $migration['process']['field_domain_all_affiliates'] = [
+        ['plugin' => 'get', 'source' => 'domain_all_affiliates'],
+      ];
+      $migration['process']['field_domain_source'] = [
+        ['plugin' => 'get', 'source' => 'domain_source'],
+      ];
+    }
+
+    // Profiles: migrated from D7 users, which carry no node-style domain
+    // data — swap in the CAS source that reads the user's domain_editor
+    // assignments so the profile lands on that person's domain(s). Group
+    // placement is handled separately by cas_profile_group_content.
+    if ($id === 'upgrade_d7_user_to_profile'
+      && ($migration['source']['plugin'] ?? NULL) === 'd7_user') {
+      $migration['source']['plugin'] = 'cas_d7_user_profile_domain';
+      $migration['process']['field_domain_access'] = [
+        [
+          'plugin' => 'sub_process',
+          'source' => 'domain_access_node',
+          'process' => ['target_id' => 'target_id'],
+        ],
+      ];
+    }
+
     // Editor-entered markup needs two repairs: inline larch text-color
     // classes (.osu-orange, .larch-white) become native osu-text-* names,
     // and hardcoded /sites/agscid7/files/... URLs are rewritten to the D10

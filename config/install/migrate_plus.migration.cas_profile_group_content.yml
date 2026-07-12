@@ -1,0 +1,45 @@
+langcode: en
+status: true
+dependencies: {  }
+id: cas_profile_group_content
+# NOT tagged 'CAS Groups': that tag imports in rebuild section 6, before the
+# profile nodes exist (section 7). rebuild_site.sh runs this migration
+# explicitly after the profile migrations instead.
+migration_tags:
+  - Drupal 7 OG
+  - OSU Groups Content
+  - OSU Groups
+  - OSU
+  - CAS
+migration_group: osu_groups
+label: 'Migrate D7 user OG memberships into profile-node Group content'
+source:
+  plugin: d7_og_membership_user
+process:
+  label: etid
+  type:
+    plugin: default_value
+    default_value: basic_group-group_node-profile
+  gid:
+    - plugin: migration_lookup
+      migration: cas_node_og_group
+      no_stub: true
+      source: gid
+    - plugin: skip_on_empty
+      method: row
+      message: 'gid is missing'
+  entity_id:
+    - plugin: migration_lookup
+      migration: upgrade_d7_user_to_profile
+      no_stub: true
+      source: etid
+    - plugin: skip_on_empty
+      method: row
+      message: 'profile node missing.'
+destination:
+  plugin: 'entity:group_content'
+migration_dependencies:
+  required:
+    - cas_node_og_group
+    - upgrade_d7_user_to_profile
+  optional: [ ]
