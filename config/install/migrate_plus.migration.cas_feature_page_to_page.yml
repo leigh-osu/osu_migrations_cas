@@ -94,7 +94,13 @@ process:
     plugin: default_value
     default_value: 0
 
-  # Layout Builder: convert D7 paragraphs into layout sections.
+  # Layout Builder: convert D7 paragraphs into layout sections. Mirror the
+  # D7 feature page order — cover photo directly under the title, then the
+  # introduction (mapped to body, rendered by the default section), then the
+  # paragraph sections.
+  cover_temp:
+    plugin: cas_cover_photo_section
+    source: field_cover_photo
   default_temp:
     plugin: default_layout
     bundle: page
@@ -104,8 +110,9 @@ process:
   layout_builder__layout:
     plugin: get
     source:
-      - '@paragraphs_temp'
+      - '@cover_temp'
       - '@default_temp'
+      - '@paragraphs_temp'
 
   # Content type
   type:
