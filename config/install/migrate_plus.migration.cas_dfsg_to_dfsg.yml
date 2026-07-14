@@ -36,11 +36,21 @@ process:
 
   # Text passthroughs
   field_dfsg_overview:
-    plugin: get
+    plugin: sub_process
     source: field_dfsg_overview
+    process:
+      value: value
+      format:
+        plugin: default_value
+        default_value: full_html
   field_dfsg_alumni_spotlight:
-    plugin: get
+    plugin: sub_process
     source: field_alumni_spotlight
+    process:
+      value: value
+      format:
+        plugin: default_value
+        default_value: full_html
   field_dfsg_program_requirements:
     plugin: get
     source: field_dfsg_program_requirements

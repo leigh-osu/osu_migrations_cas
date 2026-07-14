@@ -46,8 +46,13 @@ process:
     plugin: get
     source: field_dfs_faces_of_agsci
   field_dfs_degree_options:
-    plugin: get
+    plugin: sub_process
     source: field_dfs_degree_options
+    process:
+      value: value
+      format:
+        plugin: default_value
+        default_value: full_html
   field_dfs_potential_career_paths:
     plugin: get
     source: field_dfs_potential_career_paths
