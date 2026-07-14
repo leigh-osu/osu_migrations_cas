@@ -76,15 +76,20 @@ process:
       title: title
 
   # User reference (D7 user_reference -> D10 entity_reference:user)
+  # Instructor references the osu_profile NODE (uid -> profile nid). During
+  # a fresh rebuild profiles don't exist yet at this point; the section-7
+  # cas_course_instructor migration fills the field after they do.
   field_course_instructor:
     plugin: sub_process
     source: field_instructor
     process:
       target_id:
         - plugin: migration_lookup
-          migration: upgrade_d7_users_with_roles
+          migration: upgrade_d7_user_to_profile
           source: uid
           no_stub: true
+        - plugin: skip_on_empty
+          method: process
         - plugin: skip_on_empty
           method: process
 

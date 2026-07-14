@@ -133,7 +133,7 @@ process:
     process:
       target_id:
         - plugin: migration_lookup
-          migration: upgrade_d7_users_with_roles
+          migration: upgrade_d7_user_to_profile
           source: uid
           no_stub: true
         - plugin: skip_on_empty
@@ -144,7 +144,7 @@ process:
     process:
       target_id:
         - plugin: migration_lookup
-          migration: upgrade_d7_users_with_roles
+          migration: upgrade_d7_user_to_profile
           source: uid
           no_stub: true
         - plugin: skip_on_empty

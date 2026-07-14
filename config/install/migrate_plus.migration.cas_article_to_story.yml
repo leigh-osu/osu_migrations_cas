@@ -79,14 +79,21 @@ process:
       uri: url
       title: title
 
+  # Featured employee references the osu_profile NODE. The D7 field is a
+  # user_reference whose column is field_osu_employee_uid — sub_process rows
+  # expose it as "uid", not "target_id" (the old target_id source made this
+  # field migrate empty since day one).
   field_story_osu_employee:
     plugin: sub_process
     source: field_osu_employee
     process:
       target_id:
-        plugin: migration_lookup
-        migration: upgrade_d7_users_with_roles
-        source: target_id
+        - plugin: migration_lookup
+          migration: upgrade_d7_user_to_profile
+          source: uid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
 
   field_story_category:
     plugin: get

@@ -74,8 +74,10 @@ process:
   layout_builder__layout:
     plugin: get
     source:
-      - '@paragraphs_temp'
+      # Default section (body) first: D7 rendered body above the
+      # paragraph sections (body weight 1, field_paragraph weight 2+).
       - '@default_temp'
+      - '@paragraphs_temp'
   type:
     plugin: default_value
     default_value: page
