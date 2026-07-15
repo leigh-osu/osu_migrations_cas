@@ -108,11 +108,33 @@ process:
         - plugin: skip_on_empty
           method: process
 
-  # NOTE: field_aeb_pdf and field_aeb_xls are entity_reference:media in D10, but the
-  # corresponding D7 fields (field_pdf, field_aeb_xls) are link_field types pointing
-  # to file URLs (e.g. /sites/agscid7/files/oaeb/pdf/EM8679.pdf). Most of these
-  # files were not managed (only ~32 of 147 nodes have managed files), so URL->media
-  # resolution would miss most rows. Left unmigrated for manual handling.
+  # field_aeb_pdf / field_aeb_xls are entity_reference:media (document) in D10, but
+  # the D7 fields (field_pdf, field_aeb_xls) are link_field columns storing file URLs
+  # (e.g. /sites/agscid7/files/oaeb/pdf/EM8679.pdf). Most of these files were never
+  # registered in D7 {file_managed} (only ~32 of 202 refs), so a migration_lookup
+  # would miss them. cas_file_url_to_media instead resolves the URL to the physical
+  # file already staged under public://oaeb/ and finds-or-creates a File + document
+  # Media, returning the media id. Off-site or dead URLs (no file on disk) resolve to
+  # NULL and are dropped by skip_on_empty.
+  field_aeb_pdf:
+    plugin: sub_process
+    source: field_pdf
+    process:
+      target_id:
+        - plugin: cas_file_url_to_media
+          source: url
+        - plugin: skip_on_empty
+          method: process
+
+  field_aeb_xls:
+    plugin: sub_process
+    source: field_aeb_xls
+    process:
+      target_id:
+        - plugin: cas_file_url_to_media
+          source: url
+        - plugin: skip_on_empty
+          method: process
 
   # NOTE: field_guid has no D10 destination — skipped.
 
