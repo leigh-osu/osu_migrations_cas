@@ -1,0 +1,28 @@
+langcode: en
+status: true
+id: cas_media_caption_seed
+label: 'Seed media field_media_caption from image alt/title'
+# `default` group, not `content` (see cas_media_alt_backfill).
+migration_group: default
+dependencies: {  }
+migration_tags:
+  - Drupal 7
+  - OSU
+  - CAS
+source:
+  plugin: cas_media_caption_seed
+
+process:
+  # The source only yields media with an empty caption and a usable alt/title.
+  mid: mid
+  field_media_caption: caption
+
+destination:
+  plugin: 'entity:media'
+  default_bundle: image
+
+# Run after the alt backfill so gallery field text (now on the media alt) seeds
+# the caption too.
+migration_dependencies:
+  required:
+    - cas_media_alt_backfill

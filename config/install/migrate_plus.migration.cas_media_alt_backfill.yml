@@ -1,0 +1,31 @@
+langcode: en
+status: true
+id: cas_media_alt_backfill
+label: 'Backfill media image alt/title from D7 per-delta field text'
+# `default` group, not `content`: the content group injects node process
+# defaults (langcode/vid/title/...) which would corrupt a media update.
+migration_group: default
+dependencies: {  }
+migration_tags:
+  - Drupal 7
+  - OSU
+  - CAS
+source:
+  plugin: cas_media_alt_backfill
+
+process:
+  # The source only yields media that need a change; it emits the complete
+  # desired image value, so target_id must be written back to preserve the file.
+  mid: mid
+  field_media_image/target_id: target_id
+  field_media_image/alt: alt
+  field_media_image/title: title
+
+# entity:media loads the media by mid and updates field_media_image in place.
+destination:
+  plugin: 'entity:media'
+  default_bundle: image
+
+migration_dependencies:
+  required:
+    - upgrade_d7_media_images
