@@ -17,9 +17,13 @@ source:
   plugin: d7_og_membership_user
 process:
   label: etid
+  # Resolved via Group's own storage handler rather than hard-coded: the id is
+  # derived from group type + plugin and hashes once it passes 32 chars, so it
+  # changes if the bundle is renamed. See CasGroupRelationshipTypeId.
   type:
-    plugin: default_value
-    default_value: basic_group-group_node-profile
+    plugin: cas_group_relationship_type_id
+    group_type: basic_group
+    relation_plugin: 'group_node:osu_profile'
   gid:
     - plugin: migration_lookup
       migration: cas_node_og_group
