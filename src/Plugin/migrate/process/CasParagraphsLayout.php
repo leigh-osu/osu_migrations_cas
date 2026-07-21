@@ -248,6 +248,11 @@ class CasParagraphsLayout extends CasLayoutBase {
 
     $bootstrap_styles = ['min_height' => ['class' => $min_height]];
     if ($background !== NULL) {
+      // BackgroundColor::build() reads background.background_type unconditionally
+      // (bootstrap_styles/.../Style/BackgroundColor.php), so the sibling
+      // 'background' key must be present or it warns on every render. The class
+      // itself lives in background_color.
+      $bootstrap_styles['background'] = ['background_type' => 'color'];
       $bootstrap_styles['background_color'] = ['class' => $background];
     }
 
