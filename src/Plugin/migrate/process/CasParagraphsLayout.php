@@ -151,8 +151,8 @@ class CasParagraphsLayout extends CasLayoutBase {
             $blockId = $this->lookupBlock($migrationItem->getMigrationId(), $migrationItem->getId());
             $block = $this->entityTypeManager->getStorage('block_content')
               ->load($blockId);
-            $picbox_section = $this->handlePicboxGridLayoutItems($block);
-            $sections[] = $picbox_section;
+            // A picbox now yields one grid-row section per chunk of columns.
+            $sections = array_merge($sections, $this->handlePicboxGridLayoutItems($block));
           }
         }
         catch (LayoutMigrationMissingBlockException $e) {
@@ -328,33 +328,40 @@ class CasParagraphsLayout extends CasLayoutBase {
   }
 
   /**
-   * Additional blocks need to be queried and placed in a section for picbox grid Layout.
+   * Build the grid-row sections for a D7 picbox grid.
+   *
+   * The card blocks are laid out as a Bootstrap grid of field_lp_picbox_cols_max
+   * columns: one blb_col_N section per row of N cards, one card per grid cell.
    *
    * @param \Drupal\block_content\Entity\BlockContent $block
    *   The block containing IDs of the Grid Item blocks.
    *
-   * @return \Drupal\layout_builder\Section
-   * A Layout Builder Section object populated with Section Components.
-   *
- */
+   * @return \Drupal\layout_builder\Section[]
+   *   One Layout Builder Section per grid row.
+   */
   protected function handlePicboxGridLayoutItems($block) {
     $extra_data = unserialize($block->get('field_block_serialized_data')->value);
     $block_ids = explode(',', $extra_data['migration']['attached_block_ids']);
-    $columns = $extra_data['migration']['picbox_columns'];
-    $components = [];
-    foreach ($block_ids as $index => $block_id) {
-      $block_revision_id = $this->blockContentStorage->getLatestRevisionId($block_id);
-      $block_type = 'osu_card';
-      $additional = array();
-      // Using mod 4 and adding 1 we should always return column 1-4.
-      $row = 'blb_region_col_' . ($index % $columns + 1);
-//      $additional = $this->getAdditionalBlockSettings($block, $row, $item);
-      $components[] = $this->createSectionComponent($block_type, $block_revision_id, $row, $additional, $index, 'picbox');
+    // field_lp_picbox_cols_max, captured by CasPicboxGrid.
+    $columns = max(1, (int) $extra_data['migration']['picbox_columns']);
+
+    // One Bootstrap grid row (blb_col_N section) per chunk of $columns cards,
+    // one card per grid cell -- the same one-block-per-column structure as the
+    // migrated menu bar. Bootstrap columns in a row are equal height, so the
+    // cards line up as a grid, instead of the old round-robin distribution that
+    // stacked multiple cards per column and left rows unaligned.
+    $sections = [];
+    foreach (array_chunk($block_ids, $columns) as $chunk) {
+      $components = [];
+      foreach (array_values($chunk) as $index => $block_id) {
+        $block_revision_id = $this->blockContentStorage->getLatestRevisionId($block_id);
+        $components[] = $this->createSectionComponent('osu_card', $block_revision_id, 'blb_region_col_' . ($index + 1), [], $index, 'picbox');
+      }
+      $section = $this->createSection('bootstrap_layout_builder:blb_col_' . $columns, []);
+      $this->appendComponentsToSection($components, $section);
+      $sections[] = $section;
     }
-    $settings = array();
-    $section = $this->createSection('bootstrap_layout_builder:blb_col_' . $columns, [], $settings);
-    $this->appendComponentsToSection($components, $section);
-    return $section;
+    return $sections;
   }
 
 }

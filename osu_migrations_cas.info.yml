@@ -3,7 +3,7 @@ type: module
 description: Contains migrations for College of Agricultural Sciences.
 package: OSU Migrations - Sites
 core_version_requirement: ^10 || ^11
-version: 1.0.32
+version: 1.0.33
 
 dependencies:
   - osu_migrations:osu_migrations
