@@ -38,7 +38,6 @@ source:
       4_column_col4: 'paragraph_4_column_col4__to__layout_builder'
       paragraph_accordion: 'paragraph_accordion__to__layout_builder'
       alert_message: 'paragraph_alert_message__to__layout_builder'
-      paragraph_divider: 'paragraph_divider__to__layout_builder'
       paragraph_menu: 'paragraph_menu__to__layout_builder'
       lp_vertical_tabs: 'paragraph_lp_vertical_tabs__to__layout_builder'
       lp_picbox_grid: 'paragraph_lp_picbox_grid__to__layout_builder'
@@ -143,7 +142,6 @@ migration_dependencies:
     - paragraph_4_column_col2__to__layout_builder
     - paragraph_4_column_col3__to__layout_builder
     - paragraph_4_column_col4__to__layout_builder
-    - paragraph_divider__to__layout_builder
     - paragraph_menu__to__layout_builder
     - paragraph_accordion__to__layout_builder
     - paragraph_alert_message__to__layout_builder

@@ -70,6 +70,14 @@ class CasParagraphsLayout extends CasLayoutBase {
           if (in_array($type, $ignored_bundles, TRUE)) {
             continue;
           }
+          // Dividers were empty full-width spacer bands in D7, not content.
+          // Emit a component-less section carrying the D7 size (as a
+          // min-height) and colour (as a background), rather than an empty
+          // block. No block is created, so skip the rest of the loop.
+          if ($type === 'paragraph_divider') {
+            $sections[] = $this->createDividerSection($item['value']);
+            continue;
+          }
           $sectionType = $this->getSectionType($type);
           $section = $this->createSection($sectionType, []);
 
@@ -185,6 +193,69 @@ class CasParagraphsLayout extends CasLayoutBase {
       $types[$id] = $query->execute()->fetchField();
     }
     return $types[$id];
+  }
+
+  /**
+   * Build a component-less section for a D7 divider paragraph.
+   *
+   * D7 dividers (paragraphs-item--paragraph_divider.tpl.php) were empty
+   * edge-to-edge spacer bands: field_p_divider_size set the height and
+   * field_p_divider_color the background. Reproduce that as a Layout Builder
+   * section with no components, carrying the height and colour as
+   * bootstrap_styles section settings rather than migrating an empty block.
+   *
+   * The horizontal-line variant (field_p_divider_additional) is intentionally
+   * not reproduced; every divider becomes a plain spacer band.
+   *
+   * @param int|string $itemId
+   *   The D7 paragraphs_item id of the divider.
+   *
+   * @return \Drupal\layout_builder\Section
+   *   An edge-to-edge (w-100) blb_col_1 section with no components.
+   */
+  protected function createDividerSection($itemId) {
+    // D7 size -> min-height utility. The osu-min-h-25/50 classes are provided
+    // by manzanita (_cas_min_height.scss); 100 and up come from madrone.
+    $size = $this->migrateDb->select('field_data_field_p_divider_size', 'd')
+      ->fields('d', ['field_p_divider_size_value'])
+      ->condition('d.entity_id', $itemId)
+      ->execute()
+      ->fetchField();
+    $min_height = match ($size) {
+      'medium' => 'osu-min-h-50',
+      'large' => 'osu-min-h-100',
+      // 'small' and any unexpected/empty value default to the smallest step.
+      default => 'osu-min-h-25',
+    };
+
+    // D7 colour -> osu-bg-* background. White (and empty) stay transparent, so
+    // no background class is added. Targets exist in madrone/manzanita's
+    // bg palettes; values mirror osu_paragraphs/styles/_divider.less.
+    $color = $this->migrateDb->select('field_data_field_p_divider_color', 'd')
+      ->fields('d', ['field_p_divider_color_value'])
+      ->condition('d.entity_id', $itemId)
+      ->execute()
+      ->fetchField();
+    $background = match ($color) {
+      'orange' => 'osu-bg-osuorange',
+      'green' => 'osu-bg-pine-stand',
+      'yellow' => 'osu-bg-luminance',
+      'blue' => 'osu-bg-stratosphere',
+      'black' => 'osu-bg-black',
+      'gray' => 'osu-bg-coastline',
+      default => NULL,
+    };
+
+    $bootstrap_styles = ['min_height' => ['class' => $min_height]];
+    if ($background !== NULL) {
+      $bootstrap_styles['background_color'] = ['class' => $background];
+    }
+
+    // w-100 = edge-to-edge; no components = an empty styled band.
+    return $this->createSection('bootstrap_layout_builder:blb_col_1', [], [
+      'container' => 'w-100',
+      'container_wrapper' => ['bootstrap_styles' => $bootstrap_styles],
+    ]);
   }
 
   /**
