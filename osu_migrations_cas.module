@@ -157,6 +157,13 @@ function osu_migrations_cas_migration_plugins_alter(array &$migrations) {
           'method' => 'row',
         ],
       ];
+      // D7Webform lowercases element keys but the stock D7WebformSubmission
+      // keys the submitted data by the raw D7 form_key, so mixed-case
+      // components render blank; file components also store the raw D7 fid.
+      // Swap in the CAS source that lowercases the keys and remaps the fids
+      // (migrate iterates the data array per value, so this must be fixed in
+      // the source, before the keys are read).
+      $migration['source']['plugin'] = 'cas_d7_webform_submission';
     }
 
     // Publications: the stock osu_biblio_reference source carries no domain

@@ -68,6 +68,9 @@ process:
   field_domain_all_affiliates:
     - plugin: get
       source: domain_all_affiliates
+  field_domain_source:
+    - plugin: get
+      source: domain_source
 
 destination:
   plugin: 'entity:node'

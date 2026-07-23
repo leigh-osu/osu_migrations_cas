@@ -11,7 +11,9 @@ migration_tags:
   - OSU
   - CAS
 source:
-  plugin: d7_node
+  # Domain-aware node source: adds domain_access_node, domain_all_affiliates
+  # and domain_source (D7 machine names = D10 domain ids).
+  plugin: d7_node_domain_access
   node_type: group
 process:
   # Leave id as the source nid - it is used for group menu/content lookups.
@@ -140,6 +142,21 @@ process:
 
   # Newsletter link
   field_group_newsletter_link: field_group_newsletter_link
+
+  # Domains: same assignment the D7 node had, plus a canonical (home) domain --
+  # the D7-pinned domain_source when set, otherwise derived from the
+  # assignments (single domain, else single non-default, else first).
+  field_domain_access:
+    plugin: sub_process
+    source: domain_access_node
+    process:
+      target_id: target_id
+  field_domain_all_affiliates: domain_all_affiliates
+  field_domain_source:
+    plugin: cas_group_canonical_domain
+    source:
+      - domain_source
+      - domain_access_node
 destination:
   plugin: 'entity:group'
 migration_dependencies:
