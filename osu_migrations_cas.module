@@ -270,6 +270,7 @@ function _osu_migrations_cas_map_inline_classes_pipeline(array $pipeline) {
     if (is_array($step) && ($step['plugin'] ?? NULL) === 'osu_media_wysiwyg_filter') {
       $result[] = ['plugin' => 'cas_larch_inline_classes'];
       $result[] = ['plugin' => 'cas_legacy_file_paths'];
+      $result[] = ['plugin' => 'cas_social_icon_images'];
     }
   }
   return count($result) === 1 && $single ? $result[0] : $result;

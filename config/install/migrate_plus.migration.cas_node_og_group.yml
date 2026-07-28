@@ -61,7 +61,14 @@ process:
           method: process
 
   # Short name
-  field_group_short_name: field_short_name
+  # D7 short names are lowercase machine slugs ("cbarc", "cropandsoil");
+  # the header/breadcrumb lead with this field, so derive a display form
+  # (see CasGroupShortName: overrides + title segmentation + acronyms).
+  field_group_short_name:
+    plugin: cas_group_short_name
+    source:
+      - field_short_name
+      - title
 
   # Contact (D7 email field stores its value in the `email` property, not
   # `value`, so it must be remapped explicitly).
