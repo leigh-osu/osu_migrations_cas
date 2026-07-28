@@ -205,6 +205,19 @@ function osu_migrations_cas_migration_plugins_alter(array &$migrations) {
       ];
     }
 
+    // Profile ownership: the stock uid pipeline only consults the
+    // role-filtered user migration, so every role-less user's profile falls
+    // back to uid 1. Add cas_d7_active_users to the lookup so the ~352
+    // recently-active role-less accounts own their profiles (self-service
+    // profile editing keys on node ownership).
+    if ($id === 'upgrade_d7_user_to_profile'
+      && ($migration['process']['uid'][0]['plugin'] ?? NULL) === 'migration_lookup') {
+      $migration['process']['uid'][0]['migration'] = [
+        'upgrade_d7_users_with_roles',
+        'cas_d7_active_users',
+      ];
+    }
+
     // Editor-entered markup needs two repairs: inline larch text-color
     // classes (.osu-orange, .larch-white) become native osu-text-* names,
     // and hardcoded /sites/agscid7/files/... URLs are rewritten to the D10

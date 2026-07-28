@@ -1,0 +1,65 @@
+langcode: en
+status: true
+id: cas_d7_active_users
+label: 'Active role-less user accounts (logged in since 2023-07-27)'
+migration_group: insert_users
+dependencies: {  }
+migration_tags:
+  - Drupal 7
+  - OSU
+  - CAS
+  - CAS Accounts
+source:
+  plugin: cas_d7_user_active_no_roles
+  # 2023-07-27T00:00:00Z — fixed so reruns are deterministic; the "last
+  # three years" window was agreed against the 2026-07-27 audit that found
+  # 352 such users (of 1,730 role-less: 1,083 never logged in at all).
+  login_since: 1690416000
+  # Unused (query() is overridden) but keeps the parent constructor happy.
+  role_names: {  }
+  # Mirror of upgrade_d7_users_with_roles' role_names: anyone holding one of
+  # these belongs to that migration, never this one.
+  exclude_role_names:
+    - earl
+    - architect
+    - author
+    - manager
+    - 'group user'
+    - 'paragraph editor'
+    - 'profile editor'
+process:
+  uid: uid
+  name: name
+  pass: pass
+  mail: mail
+  created: created
+  access: access
+  login: login
+  status: status
+  timezone: timezone
+  langcode:
+    plugin: user_langcode
+    source: language
+    fallback_to_site_default: false
+  preferred_langcode:
+    plugin: user_langcode
+    source: language
+    fallback_to_site_default: true
+  preferred_admin_langcode:
+    plugin: user_langcode
+    source: language
+    fallback_to_site_default: true
+  init: init
+  roles:
+    plugin: osu_user_role_map
+    source: roles
+  field_domain_access:
+    plugin: sub_process
+    source: domain_access_user
+    process:
+      target_id: target_id
+destination:
+  plugin: 'entity:user'
+migration_dependencies:
+  required:
+    - upgrade_d7_users_with_roles
