@@ -1,0 +1,55 @@
+langcode: en
+status: true
+id: cas_focal_points
+label: 'D7 focal points -> focal_point crop entities'
+migration_group: osu_media
+dependencies: {  }
+migration_tags:
+  - Drupal 7
+  - OSU
+  - CAS
+source:
+  plugin: cas_d7_focal_points
+process:
+  # Update the auto-created default crop for this uri when one exists
+  # (media saves during migration create centered defaults); otherwise a
+  # new crop is created.
+  cid:
+    plugin: cas_existing_crop_id
+    source: uri
+  type:
+    plugin: default_value
+    default_value: focal_point
+  entity_id:
+    - plugin: migration_lookup
+      migration: upgrade_d7_files
+      no_stub: true
+      source: fid
+    - plugin: skip_on_empty
+      method: row
+      message: 'File was not migrated; skipping focal point.'
+  entity_type:
+    plugin: default_value
+    default_value: file
+  # File URIs are preserved verbatim by upgrade_d7_files, and focal_point
+  # looks crops up by uri (Crop::findCrop), so the D7 uri is the D10 uri.
+  uri: uri
+  x:
+    plugin: cas_focal_point_pixel
+    axis: x
+    source:
+      - focal_point
+      - width
+      - height
+  y:
+    plugin: cas_focal_point_pixel
+    axis: y
+    source:
+      - focal_point
+      - width
+      - height
+destination:
+  plugin: 'entity:crop'
+migration_dependencies:
+  required:
+    - upgrade_d7_files
