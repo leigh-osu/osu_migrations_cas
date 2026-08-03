@@ -22,6 +22,16 @@ process:
     - plugin: skip_on_empty
       method: row
 
+  # The profile-level display email wins over the account mail that the
+  # generic migration stamped (215 D7 profiles differ); empty profile
+  # emails leave the account value in place.
+  field_profile_email:
+    - plugin: callback
+      callable: trim
+      source: email/0/email
+    - plugin: skip_on_empty
+      method: process
+
   # Name extras (existing string fields, not mapped by the generic migration).
   field_profile_preferred_name: preferred_name
   field_profile_pronouns: field_person_pronouns
@@ -94,6 +104,7 @@ destination:
   default_bundle: osu_profile
   # Update only these fields on the existing node; preserve langcode/title/etc.
   overwrite_properties:
+    - field_profile_email
     - field_profile_preferred_name
     - field_profile_pronouns
     - field_profile_name_suffix

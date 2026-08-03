@@ -41,6 +41,7 @@ class OsuProfile2EmployeeAddress extends OsuProfile2 {
   public function fields() {
     $fields = parent::fields();
     $fields['profile_address'] = $this->t('Flattened office address for the D10 address field.');
+    $fields['affiliation_names'] = $this->t('Names of every affiliated_with department, in delta order.');
     return $fields;
   }
 
@@ -53,7 +54,43 @@ class OsuProfile2EmployeeAddress extends OsuProfile2 {
       return FALSE;
     }
     $row->setSourceProperty('profile_address', $this->fetchAddress($row->getSourceProperty('pid')));
+    $row->setSourceProperty('affiliation_names', $this->fetchAffiliations($row->getSourceProperty('pid')));
     return $result;
+  }
+
+  /**
+   * Names of every affiliated_with department for a profile.
+   *
+   * The stock office-location migration collapses affiliated_with to a
+   * single department; this returns the full set so field_osu_organizations
+   * carries every affiliation. Preferred name first, falling back to the
+   * department title (preferred names are what the osu_organization
+   * vocabulary terms are named after).
+   *
+   * @param int $pid
+   *   The D7 profile2 id.
+   *
+   * @return array
+   *   Items shaped [['name' => string], ...], deduped, in delta order.
+   */
+  protected function fetchAffiliations($pid) {
+    $query = $this->select('field_data_affiliated_with', 'aw');
+    $query->condition('aw.entity_type', 'profile2')
+      ->condition('aw.entity_id', $pid)
+      ->condition('aw.deleted', 0);
+    $query->leftJoin('field_data_department_preferred_name', 'pn', "pn.entity_id = aw.affiliated_with_target_id AND pn.deleted = 0");
+    $query->leftJoin('field_data_department_title', 'dt', "dt.entity_id = aw.affiliated_with_target_id AND dt.deleted = 0");
+    $query->addField('pn', 'department_preferred_name_value', 'preferred');
+    $query->addField('dt', 'department_title_value', 'title');
+    $query->orderBy('aw.delta');
+    $names = [];
+    foreach ($query->execute() as $record) {
+      $name = trim((string) ($record['preferred'] ?: $record['title']));
+      if ($name !== '' && !in_array($name, $names, TRUE)) {
+        $names[] = $name;
+      }
+    }
+    return array_map(fn ($name) => ['name' => $name], $names);
   }
 
   /**

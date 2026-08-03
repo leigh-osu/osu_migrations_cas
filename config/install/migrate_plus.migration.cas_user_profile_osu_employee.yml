@@ -34,6 +34,53 @@ process:
   field_profile_address/address_line1: profile_address/address_line1
   field_profile_address/address_line2: profile_address/address_line2
 
+  # Every affiliated_with department (the stock office-location migration
+  # keeps only one); names match the osu_organization terms.
+  field_osu_organizations:
+    plugin: sub_process
+    source: affiliation_names
+    process:
+      target_id:
+        # entity_generate: departments were a D7 content type that is NOT
+        # recreated in D10 — affiliations live as osu_organization terms,
+        # created on the fly for names the vocabulary lacks.
+        - plugin: entity_generate
+          entity_type: taxonomy_term
+          bundle_key: vid
+          bundle: osu_organization
+          value_key: name
+          ignore_case: true
+          source: name
+        - plugin: skip_on_empty
+          method: row
+
+  # Functional group terms (vocabulary migrated by OSU Taxonomy).
+  field_profile_functional_group:
+    plugin: sub_process
+    source: functional_group
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration: 'upgrade_d7_taxonomy_terms:functional_groups'
+          source: tid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: row
+
+  # Headquarters (D7 list_text keys -> labels).
+  field_profile_headquarters:
+    - plugin: static_map
+      source: headquarters/0/value
+      map:
+        '01': 'OSU Main Campus'
+        '02': 'Cascades Campus'
+        '03': 'Hatfield Marine Science Center'
+        '04': 'Experiment Station'
+        '05': 'Other'
+      default_value: null
+    - plugin: skip_on_empty
+      method: process
+
   type:
     plugin: default_value
     default_value: osu_profile
@@ -45,6 +92,9 @@ destination:
     - field_profile_alt_phone
     - field_profile_fax
     - field_profile_address
+    - field_osu_organizations
+    - field_profile_functional_group
+    - field_profile_headquarters
 
 migration_dependencies:
   required:
