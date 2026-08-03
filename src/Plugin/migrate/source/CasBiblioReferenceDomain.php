@@ -26,6 +26,16 @@ use Drupal\osu_migrate_content\Plugin\migrate\source\OsuBiblioReference;
 class CasBiblioReferenceDomain extends OsuBiblioReference {
 
   /**
+   * Contributor auth_types that are editors of the containing work.
+   *
+   * Secondary Author (2) is biblio's EndNote-style convention for the
+   * editor of the book/proceedings a chapter appears in; Series Editor
+   * (10) and Editor (14) are literal. Everything else stays an author
+   * (including Corporate Author — an organization credited as author).
+   */
+  protected const EDITOR_AUTH_TYPES = [2, 10, 14];
+
+  /**
    * {@inheritdoc}
    *
    * The parent query selects only b.* and n.title, but the migration maps
@@ -47,6 +57,7 @@ class CasBiblioReferenceDomain extends OsuBiblioReference {
     $fields['domain_access_node'] = $this->t('Node Domain Access');
     $fields['domain_all_affiliates'] = $this->t('Node available on all domains');
     $fields['domain_source'] = $this->t('Node canonical domain');
+    $fields['editors'] = $this->t('Editors (contributors with an editor auth_type)');
     return $fields;
   }
 
@@ -103,7 +114,34 @@ class CasBiblioReferenceDomain extends OsuBiblioReference {
     }
     $row->setSourceProperty('domain_source', $source_domain);
 
-    return parent::prepareRow($row);
+    $result = parent::prepareRow($row);
+
+    // Re-split contributors by role: the parent's selectContributors()
+    // merges every contributor into 'author' regardless of auth_type,
+    // which read the editors of edited volumes and chapters as co-authors.
+    // Rows carry cid for the cas_biblio_authors term lookup.
+    $query = $this->select('biblio_contributor', 'bc');
+    $query->fields('bc', ['auth_type', 'cid']);
+    $query->fields('bcd', ['name']);
+    $query->innerJoin('biblio_contributor_data', 'bcd', 'bc.cid = bcd.cid');
+    $query->condition('bc.nid', $nid);
+    $query->condition('bc.vid', $row->getSourceProperty('vid'));
+    $query->orderBy('bc.rank');
+    $authors = [];
+    $editors = [];
+    foreach ($query->execute() as $record) {
+      $item = ['cid' => $record['cid'], 'name' => $record['name']];
+      if (in_array((int) $record['auth_type'], self::EDITOR_AUTH_TYPES, TRUE)) {
+        $editors[] = $item;
+      }
+      else {
+        $authors[] = $item;
+      }
+    }
+    $row->setSourceProperty('author', $authors);
+    $row->setSourceProperty('editors', $editors);
+
+    return $result;
   }
 
 }

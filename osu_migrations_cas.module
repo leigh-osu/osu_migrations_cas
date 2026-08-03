@@ -187,6 +187,109 @@ function osu_migrations_cas_migration_plugins_alter(array &$migrations) {
       $migration['process']['field_domain_source'] = [
         ['plugin' => 'get', 'source' => 'domain_source'],
       ];
+
+      // CAS field additions the stock migration drops (see the biblio audit,
+      // 2026-08-03): the publication URL, ISBN, publisher city, keywords,
+      // and a type-aware home for biblio_secondary_title, which is the
+      // journal for articles but the book title for chapters and the series
+      // for books/reports.
+      $migration['process']['field_pub_url/uri'] = [
+        ['plugin' => 'callback', 'callable' => 'trim', 'source' => 'biblio_url'],
+        ['plugin' => 'skip_on_empty', 'method' => 'process'],
+        // Bare host names ("www.x.org/...") need a scheme to be a valid
+        // link URI; anything already carrying scheme:// passes through.
+        [
+          'plugin' => 'str_replace',
+          'regex' => TRUE,
+          'search' => '~^(?![a-z][a-z0-9+.-]*://)~i',
+          'replace' => 'http://',
+        ],
+      ];
+      // D7 editors typed citation-style punctuation into these ("London :",
+      // "0412573504 :"); strip the trailing separators.
+      $trailing_punct = [
+        'plugin' => 'str_replace',
+        'regex' => TRUE,
+        'search' => '~[\s:;,.]+$~',
+        'replace' => '',
+      ];
+      $migration['process']['field_pub_isbn'] = [
+        ['plugin' => 'callback', 'callable' => 'trim', 'source' => 'biblio_isbn'],
+        ['plugin' => 'skip_on_empty', 'method' => 'process'],
+        $trailing_punct,
+      ];
+      $migration['process']['field_pub_publisher_city'] = [
+        ['plugin' => 'callback', 'callable' => 'trim', 'source' => 'biblio_place_published'],
+        ['plugin' => 'skip_on_empty', 'method' => 'process'],
+        $trailing_punct,
+      ];
+      $migration['process']['field_pub_keywords'] = [
+        [
+          'plugin' => 'sub_process',
+          'source' => 'keywords',
+          'process' => [
+            'target_id' => [
+              [
+                'plugin' => 'migration_lookup',
+                'migration' => 'cas_biblio_keywords',
+                'source' => 'kid',
+                'no_stub' => TRUE,
+              ],
+              ['plugin' => 'skip_on_empty', 'method' => 'row'],
+            ],
+          ],
+        ],
+      ];
+      // Editors of the containing work (split from 'author' by the CAS
+      // source per auth_type) get their own field instead of reading as
+      // co-authors.
+      $migration['process']['field_pub_editors'] = [
+        [
+          'plugin' => 'sub_process',
+          'source' => 'editors',
+          'process' => ['value' => 'name'],
+        ],
+      ];
+      // Authors and editors become Publication Authors terms (one shared
+      // vocabulary, so a person's term page collects everything they
+      // touched). The CAS source splits contributors by auth_type and
+      // carries the D7 cid for the term lookup; the stock name-string
+      // mapping is replaced wholesale.
+      foreach (['field_pub_authors' => 'author', 'field_pub_editors' => 'editors'] as $field => $source) {
+        $migration['process'][$field] = [
+          [
+            'plugin' => 'sub_process',
+            'source' => $source,
+            'process' => [
+              'target_id' => [
+                [
+                  'plugin' => 'migration_lookup',
+                  'migration' => 'cas_biblio_authors',
+                  'source' => 'cid',
+                  'no_stub' => TRUE,
+                ],
+                ['plugin' => 'skip_on_empty', 'method' => 'row'],
+              ],
+            ],
+          ],
+        ];
+      }
+      $migration['migration_dependencies']['required'][] = 'cas_biblio_authors';
+
+      foreach ([
+        'field_pub_journal' => 'journal',
+        'field_pub_book_title' => 'book',
+        'field_pub_series_title' => 'series',
+      ] as $field => $target) {
+        $migration['process'][$field] = [
+          [
+            'plugin' => 'cas_biblio_secondary_title',
+            'source' => ['biblio_type', 'biblio_secondary_title'],
+            'target' => $target,
+          ],
+        ];
+      }
+      $migration['migration_dependencies']['required'][] = 'cas_biblio_keywords';
     }
 
     // Profiles: migrated from D7 users, which carry no node-style domain
