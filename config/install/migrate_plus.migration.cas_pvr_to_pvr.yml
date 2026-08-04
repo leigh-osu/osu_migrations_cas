@@ -211,7 +211,9 @@ process:
     process:
       target_id:
         - plugin: migration_lookup
-          migration: upgrade_d7_media_images
+          migration:
+            - upgrade_d7_media_images
+            - cas_media_private_images
           source: fid
           no_stub: true
         - plugin: skip_on_empty
@@ -222,7 +224,9 @@ process:
     process:
       target_id:
         - plugin: migration_lookup
-          migration: upgrade_d7_media_images
+          migration:
+            - upgrade_d7_media_images
+            - cas_media_private_images
           source: fid
           no_stub: true
         - plugin: skip_on_empty
@@ -233,7 +237,9 @@ process:
     process:
       target_id:
         - plugin: migration_lookup
-          migration: upgrade_d7_media_images
+          migration:
+            - upgrade_d7_media_images
+            - cas_media_private_images
           source: fid
           no_stub: true
         - plugin: skip_on_empty
@@ -244,7 +250,9 @@ process:
     process:
       target_id:
         - plugin: migration_lookup
-          migration: upgrade_d7_media_images
+          migration:
+            - upgrade_d7_media_images
+            - cas_media_private_images
           source: fid
           no_stub: true
         - plugin: skip_on_empty

@@ -117,7 +117,10 @@ class CasAdjustableColumnsSection extends ProcessPluginBase implements Container
         $extra_data['migration']['adjustable_columns_section']['field_lp_background_video'] = $first_video['mid'];
       }
       elseif (!isset($extra_data['migration']['adjustable_columns_section']['eb_background'])) {
-        $image_mids = $this->migrateLookup->lookup('upgrade_d7_media_images', [$video_data[0]['fid']]);
+        $image_mids = $this->migrateLookup->lookup([
+          'upgrade_d7_media_images',
+          'cas_media_private_images',
+        ], [$video_data[0]['fid']]);
         $first_image = reset($image_mids);
         if ($first_image) {
           $extra_data['migration']['adjustable_columns_section']['eb_background'] = $first_image['mid'] . ',image';

@@ -100,7 +100,9 @@ process:
     process:
       target_id:
         - plugin: migration_lookup
-          migration: upgrade_d7_media_documents
+          migration:
+            - upgrade_d7_media_documents
+            - cas_media_private_documents
           source: fid
           no_stub: true
         - plugin: skip_on_empty

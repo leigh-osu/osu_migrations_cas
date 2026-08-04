@@ -142,7 +142,9 @@ process:
         - plugin: cas_file_url_to_fid
           source: value
         - plugin: migration_lookup
-          migration: upgrade_d7_media_documents
+          migration:
+            - upgrade_d7_media_documents
+            - cas_media_private_documents
           no_stub: true
         - plugin: skip_on_empty
           method: process
