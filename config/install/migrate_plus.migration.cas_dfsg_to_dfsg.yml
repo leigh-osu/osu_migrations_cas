@@ -1,7 +1,7 @@
 langcode: en
 status: true
 id: cas_dfsg_to_dfsg
-label: 'Basic Degree Fact Sheet Graduate to DFSG Migration'
+label: 'Degree Fact Sheet Graduate to combined Degree Fact Sheet'
 migration_group: content
 dependencies: { }
 migration_tags:
@@ -35,7 +35,7 @@ process:
         default_value: 'full_html'
 
   # Text passthroughs
-  field_dfsg_overview:
+  field_dfs_overview:
     plugin: sub_process
     source: field_dfsg_overview
     process:
@@ -43,7 +43,7 @@ process:
       format:
         plugin: default_value
         default_value: full_html
-  field_dfsg_alumni_spotlight:
+  field_dfs_alumni_spotlight:
     plugin: sub_process
     source: field_alumni_spotlight
     process:
@@ -51,110 +51,107 @@ process:
       format:
         plugin: default_value
         default_value: full_html
-  field_dfsg_program_requirements:
+  field_dfs_program_requirements:
     plugin: get
     source: field_dfsg_program_requirements
-  field_dfsg_grad_student_support:
+  field_dfs_grad_student_support:
     plugin: get
     source: field_graduate_student_support
 
   # Integers
-  field_dfsg_aaea_fellows:
+  field_dfs_aaea_fellows:
     plugin: get
     source: field_dfsg_aaea_fellows
-  field_dfsg_fellowships:
+  field_dfs_fellowships:
     plugin: get
     source: field_dfsg_fellowships
-  field_dfsg_graduate_students:
+  field_dfs_graduate_students:
     plugin: get
     source: field_dfsg_graduate_students
-  field_dfsg_univer_disting_fac:
+  field_dfs_univer_disting_fac:
     plugin: get
     source: field_dfsg_univer_disting_fac
 
   # List fields
-  field_dfsg_degree_focus_area:
+  field_dfs_degree_focus_area:
     plugin: get
     source: field_degree_focus_area
-  field_dfsg_degree_level:
-    plugin: get
-    source: field_degree_level
-  field_dfsg_language:
+  field_dfs_language:
     plugin: get
     source: field_language
-  field_dfsg_level:
+  field_dfs_level:
     plugin: get
     source: field_level
-  field_dfsg_location:
+  field_dfs_location:
     plugin: get
     source: field_location_dfs
 
   # Boolean
-  field_dfsg_node_hide_title:
+  field_dfs_node_hide_title:
     plugin: get
     source: field_node_hide_title
 
   # Social text fields renamed from group_* to dfsg_*
-  field_dfsg_facebook:
+  field_dfs_facebook:
     plugin: get
     source: field_group_facebook
-  field_dfsg_instagram:
+  field_dfs_instagram:
     plugin: get
     source: field_group_instagram
-  field_dfsg_linkedin:
+  field_dfs_linkedin:
     plugin: get
     source: field_group_linkedin
-  field_dfsg_twitter:
+  field_dfs_twitter:
     plugin: get
     source: field_group_twitter
-  field_dfsg_youtube:
+  field_dfs_youtube:
     plugin: get
     source: field_group_youtube
 
   # Link fields
-  field_dfsg_cascades_campus:
+  field_dfs_cascades_campus:
     plugin: sub_process
     source: field_cascades_campus
     process:
       uri: url
       title: title
-  field_dfsg_corvallis_campus:
+  field_dfs_corvallis_campus:
     plugin: sub_process
     source: field_corvallis_campus
     process:
       uri: url
       title: title
-  field_dfsg_la_grande_campus:
+  field_dfs_la_grande_campus:
     plugin: sub_process
     source: field_la_grande_campus
     process:
       uri: url
       title: title
-  field_dfsg_newport_campus:
+  field_dfs_newport_campus:
     plugin: sub_process
     source: field_newport_campus
     process:
       uri: url
       title: title
-  field_dfsg_ecampus:
+  field_dfs_ecampus:
     plugin: sub_process
     source: field_ecampus
     process:
       uri: url
       title: title
-  field_dfsg_department_link:
+  field_dfs_department_link:
     plugin: sub_process
     source: field_dfs_department_link
     process:
       uri: url
       title: title
-  field_dfsg_preferred_link:
+  field_dfs_preferred_link:
     plugin: sub_process
     source: field_dfs_preferred_link
     process:
       uri: url
       title: title
-  field_dfsg_osu_catalog:
+  field_dfs_osu_catalog:
     plugin: sub_process
     source: field_osu_catalog
     process:
@@ -162,7 +159,7 @@ process:
       title: title
 
   # Image fields
-  field_dfsg_banner:
+  field_dfs_banner:
     plugin: sub_process
     source: field_dfs_banner
     process:
@@ -174,7 +171,7 @@ process:
       title: title
       width: width
       height: height
-  field_dfsg_box_image:
+  field_dfs_box_image:
     plugin: sub_process
     source: field_dfs_box_image
     process:
@@ -186,7 +183,7 @@ process:
       title: title
       width: width
       height: height
-  field_dfsg_photo:
+  field_dfs_photo:
     plugin: sub_process
     source: field_dfs_photo
     process:
@@ -205,7 +202,7 @@ process:
   # field_dfsg_degrees here.
 
   # Taxonomy (cas_themes vocab is actually cas_impact_areas in D7)
-  field_dfsg_cas_themes:
+  field_tax_cas_themes:
     plugin: sub_process
     source: field_cas_themes
     process:
@@ -230,7 +227,7 @@ process:
   # Content type
   type:
     plugin: default_value
-    default_value: degree_fact_sheet_graduate
+    default_value: degree_fact_sheet
 
   # Domain access
   field_domain_access:
@@ -255,7 +252,7 @@ process:
 
 destination:
   plugin: 'entity:node'
-  default_bundle: degree_fact_sheet_graduate
+  default_bundle: degree_fact_sheet
 
 migration_dependencies:
   required:

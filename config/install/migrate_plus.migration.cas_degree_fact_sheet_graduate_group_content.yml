@@ -19,7 +19,7 @@ process:
   label: etid
   type:
     plugin: default_value
-    default_value: group_content_type_e4723941aecab
+    default_value: group_content_type_8d5cca53aed97
   gid:
     - plugin: migration_lookup
       migration: cas_node_og_group

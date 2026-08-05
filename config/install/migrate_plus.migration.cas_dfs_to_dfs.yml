@@ -36,7 +36,7 @@ process:
         default_value: 'full_html'
 
   # Simple text -> string / string_long / text_long passthroughs
-  field_dfs_introduction:
+  field_dfs_overview:
     plugin: get
     source: field_dfs_introduction
   field_dfs_introduction_header:
@@ -67,9 +67,6 @@ process:
   field_dfs_degree_focus_area:
     plugin: get
     source: field_degree_focus_area
-  field_dfs_degree_level:
-    plugin: get
-    source: field_degree_level
   field_dfs_language:
     plugin: get
     source: field_language
