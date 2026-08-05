@@ -52,6 +52,11 @@ class CasAccordianItem extends CasLayoutBase {
     if ($accordian_format == 'filtered_html'){
       $accordian_format = 'basic_html';
     }
+    elseif ($accordian_format == 'larch_html') {
+      // larch_html was the permissive larch-editor format; no D10
+      // counterpart exists, and a dead format renders as EMPTY output.
+      $accordian_format = 'full_html';
+    }
 
     if (!empty($accordian_heading)) {
       // Create accordion items using title and body from d7.
