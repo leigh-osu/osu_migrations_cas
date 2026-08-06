@@ -759,7 +759,10 @@ class CasLayoutBase extends LayoutBase {
           ],
           "block_content_attributes" => [
             "id" => "",
-            "class" => "",
+            // D7 rendered column text over these background images inside a
+            // translucent white padded box (osu_paragraphs.css:
+            // .field-item .field-item { background: rgba(255,255,255,.85) }).
+            "class" => "osu-bg-trans-white p-3",
             "style" => "",
             "data" => "",
           ],
@@ -775,7 +778,9 @@ class CasLayoutBase extends LayoutBase {
                 'background_type' => 'color',
               ],
               'background_color' => [
-                'class' => 'osu-bg-page-alt-1',
+                // Translucent white, matching D7's overlay boxes on
+                // entity-background bands (larch-bg-trans-white).
+                'class' => 'osu-bg-trans-white',
               ],
               'text_alignment' => [
                 'class' => '_none',

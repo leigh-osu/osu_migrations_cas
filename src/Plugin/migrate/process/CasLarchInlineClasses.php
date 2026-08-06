@@ -16,8 +16,11 @@ use Drupal\migrate\Row;
  *   for links in the D10 design, so the larch .osu-orange class, inline
  *   style="color: <orange>" declarations (mostly on Hx headings and spans)
  *   and <font color="<orange>"> attributes are all stripped, letting the
- *   element fall back to the theme color. Only style/class/font ATTRIBUTES
- *   are touched; embedded <style> blocks are left as-is.
+ *   element fall back to the theme color.
+ * - Embedded <style> blocks keep their layout rules (table borders etc.)
+ *   but lose any rule whose whole selector list targets links (a { ... },
+ *   Word's a:link / span.MsoHyperlink): those repaint every link on the
+ *   page and fight the theme's links-are-orange rule.
  *
  * The plugin is inserted after every osu_media_wysiwyg_filter step by
  * osu_migrations_cas_migration_plugins_alter(), and mapText() is called
@@ -94,6 +97,33 @@ class CasLarchInlineClasses extends ProcessPluginBase {
       '$1',
       $text
     );
+    // Embedded <style> blocks: drop rules that exist solely to restyle
+    // links; keep everything else in the block.
+    if (stripos($text, '<style') !== FALSE) {
+      $text = preg_replace_callback(
+        '~(<style\b[^>]*>)(.*?)(</style>)~is',
+        function (array $m): string {
+          $css = preg_replace_callback(
+            '~([^{}]+)\{[^{}]*\}~s',
+            function (array $rule): string {
+              $selectors = array_map('trim', explode(',', trim($rule[1])));
+              foreach ($selectors as $selector) {
+                $linkish = preg_match('~^a([.:#\[][^\s{]*)?$~i', $selector)
+                  || stripos($selector, 'MsoHyperlink') !== FALSE;
+                if (!$linkish) {
+                  // A non-link selector shares the rule; keep it whole.
+                  return $rule[0];
+                }
+              }
+              return '';
+            },
+            $m[2]
+          );
+          return $m[1] . $css . $m[3];
+        },
+        $text
+      );
+    }
     return $text;
   }
 
