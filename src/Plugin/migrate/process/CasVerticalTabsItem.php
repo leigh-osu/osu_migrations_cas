@@ -61,6 +61,10 @@ class CasVerticalTabsItem extends CasLayoutBase {
         if ($vertical_tab_format == 'filtered_html'){
           $vertical_tab_format = 'basic_html';
         }
+        elseif ($vertical_tab_format == 'larch_html') {
+          // Dead format in D10 — would render as empty output.
+          $vertical_tab_format = 'full_html';
+        }
 
         $paragraph_items[] = Paragraph::create([
           'type' => 'osu_accordion_item',
@@ -109,12 +113,23 @@ class CasVerticalTabsItem extends CasLayoutBase {
       'content',
       'title.entity_id = content.entity_id && title.revision_id = content.revision_id'
     );
-    $query->fields('title', ['field_lp_vert_tab_title_value']);
+    $query->fields('title', ['entity_id', 'field_lp_vert_tab_title_value']);
     $query->fields('content', ['field_lp_vert_tab_contents_value']);
     $query->fields('content', ['field_lp_vert_tab_contents_format']);
     $query->condition('title.entity_id', $entity_ids, 'IN');
     $query->condition('title.revision_id', $revision_ids, 'IN');
-    return $query->execute();
+    $rows = $query->execute()->fetchAllAssoc('entity_id');
+
+    // D7 renders the tabset in field delta order; an IN() query returns
+    // rows in arbitrary (storage) order, which scrambled multi-tab
+    // accordions. Re-sequence to the caller's item order.
+    $ordered = [];
+    foreach ($entity_ids as $id) {
+      if (isset($rows[$id])) {
+        $ordered[] = $rows[$id];
+      }
+    }
+    return $ordered;
   }
 
   /**
