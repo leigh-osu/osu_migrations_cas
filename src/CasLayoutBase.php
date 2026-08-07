@@ -1006,10 +1006,10 @@ class CasLayoutBase extends LayoutBase {
     elseif ($item->getType() == 'paragraph_2_col') {
       // NOTE: black/orange-bg-left/right paint ONE column, not the section —
       // handled per-block in getAdditionalBlockSettings(); the other column
-      // stays on the page background like D7.
-
-      // Set two-columns to a min of 600px.
-      $settings['container_wrapper']['bootstrap_styles']['min_height'] = ['class' => 'osu-min-h-600'];
+      // stays on the page background like D7. No section min-height: D7
+      // sized these bands to their content, and image columns already carry
+      // a block-level osu-min-h-600 (getAdditionalBlockSettings), which the
+      // sibling column matches through the row's default stretch alignment.
       $settings['container'] = 'container-fluid';
       $section->setLayoutSettings($settings);
     }
