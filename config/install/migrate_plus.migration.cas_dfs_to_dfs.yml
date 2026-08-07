@@ -56,9 +56,12 @@ process:
   field_dfs_potential_career_paths:
     plugin: get
     source: field_dfs_potential_career_paths
+  # D7 email fields store their value in an 'email' column.
   field_dfs_advising_email:
-    plugin: get
+    plugin: sub_process
     source: field_dfs_advising_email
+    process:
+      value: email
   field_dfs_number_of_students:
     plugin: get
     source: field_dfs_number_of_students
@@ -235,7 +238,7 @@ process:
           method: process
 
   # Taxonomy (cas_themes vocab)
-  field_dfs_cas_themes:
+  field_tax_cas_themes:
     plugin: sub_process
     source: field_cas_themes
     process:
@@ -254,6 +257,11 @@ process:
 
   # Path settings
   path/pathauto:
+    plugin: default_value
+    default_value: 0
+
+  # Program level boolean (undergraduate source type).
+  field_dfs_graduate:
     plugin: default_value
     default_value: 0
 

@@ -196,10 +196,22 @@ process:
       width: width
       height: height
 
-  # NOTE: field_dfsg_degrees (D10 paragraph reference) is not yet attached to
-  # this bundle and no degree paragraph type exists. Add a separate
-  # field_collection -> paragraph migration once that's set up, then map
-  # field_dfsg_degrees here.
+  # Degrees-offered blocks: the D7 field_dfsg_degrees field collection is
+  # flattened into three parallel multi-value fields (delta order preserved
+  # by cas_dfsg_degrees; empty descriptions become a single space so the
+  # three fields stay aligned).
+  field_dfs_degree_title:
+    plugin: cas_dfsg_degrees
+    source: field_dfsg_degrees
+    column: title
+  field_dfs_degree_level_text:
+    plugin: cas_dfsg_degrees
+    source: field_dfsg_degrees
+    column: level
+  field_dfs_degree_description:
+    plugin: cas_dfsg_degrees
+    source: field_dfsg_degrees
+    column: description
 
   # Taxonomy (cas_themes vocab is actually cas_impact_areas in D7)
   field_tax_cas_themes:
@@ -223,6 +235,11 @@ process:
   path/pathauto:
     plugin: default_value
     default_value: 0
+
+  # Program level boolean (graduate source type).
+  field_dfs_graduate:
+    plugin: default_value
+    default_value: 1
 
   # Content type
   type:
