@@ -118,6 +118,22 @@ class CasParagraphsLayout extends CasLayoutBase {
             $migrationItem = new LayoutMigrationItem($type, $item['value'], $delta, $migration_id);
             $components = $this->createComponent($migrationItem, $section, $migration_row);
 
+            // Colored 2-col columns (black/orange-bg-*) and background-image
+            // columns fill the whole column in D7; drop the column's
+            // horizontal gutter so the colour/image reaches the edges.
+            foreach (in_array($type, ['paragraph_2_col', '2_column_4_8', 'paragraph_2_column_8_4'], TRUE) ? $components : [] as $colored_component) {
+              $styles = $colored_component->get('bootstrap_styles')['block_style'] ?? [];
+              $bg = $styles['background_color']['class'] ?? NULL;
+              $is_bg_image = ($styles['background']['background_type'] ?? NULL) === 'image';
+              if ($is_bg_image || in_array($bg, ['osu-bg-osuorange', 'osu-bg-page-alt-2'], TRUE)) {
+                $layout_settings = $section->getLayoutSettings();
+                if (!in_array('px-0', $layout_settings['layout_regions_classes'][$migration_row] ?? [], TRUE)) {
+                  $layout_settings['layout_regions_classes'][$migration_row][] = 'px-0';
+                  $section->setLayoutSettings($layout_settings);
+                }
+              }
+            }
+
             //add classes to row that will be seen in LayoutBuilder UI
             // Backgrounds are set from the row block data in
             // CasLayoutBase::setAdjustableColumnsSectionSettings().
@@ -307,7 +323,10 @@ class CasParagraphsLayout extends CasLayoutBase {
         break;
 
       default:
-        $menu_section_settings['container_wrapper']['bootstrap_styles']['background_color']['class'] = 'osu-bg-page-default';
+        // D7's default menu bar is orange (#d73f09) with white links; the
+        // menu-* classes are overrides.
+        $menu_section_settings['container_wrapper']['bootstrap_styles']['background_color']['class'] = 'osu-bg-osuorange';
+        $menu_section_settings['container_wrapper']['bootstrap_styles']['text_color']['class'] = 'osu-text-bucktoothwhite';
         break;
     }
     return $menu_section_settings;

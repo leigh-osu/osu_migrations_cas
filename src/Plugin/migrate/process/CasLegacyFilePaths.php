@@ -56,10 +56,10 @@ class CasLegacyFilePaths extends ProcessPluginBase {
       // character are all valid filename characters there, delimited only by
       // the matching closing quote (one pattern per quote type because a
       // lookbehind must be fixed-length).
-      '~(?<=")(?:https?://[^/"]+)?/sites/(?<dir>agscid7|default)/files/(?<rel>[^"?#]+?)(?:[?#][^"]*)?(?=")~i',
-      "~(?<=')(?:https?://[^/']+)?/sites/(?<dir>agscid7|default)/files/(?<rel>[^'?#]+?)(?:[?#][^']*)?(?=')~i",
+      '~(?<=")(?:https?://[^/"]+)?/sites/(?<dir>agscid7|agsci|default)/files/(?<rel>[^"?#]+?)(?:[?#][^"]*)?(?=")~i',
+      "~(?<=')(?:https?://[^/']+)?/sites/(?<dir>agscid7|agsci|default)/files/(?<rel>[^'?#]+?)(?:[?#][^']*)?(?=')~i",
       // Unquoted CSS url(...) values: parentheses delimit the URL instead.
-      '~(?<=\()(?:https?://[^/"\'()]+)?/sites/(?<dir>agscid7|default)/files/(?<rel>[^"\'()?#\s]+)(?:[?#][^"\'()]*)?(?=\))~i',
+      '~(?<=\()(?:https?://[^/"\'()]+)?/sites/(?<dir>agscid7|agsci|default)/files/(?<rel>[^"\'()?#\s]+)(?:[?#][^"\'()]*)?(?=\))~i',
     ];
     foreach ($patterns as $pattern) {
       $text = preg_replace_callback($pattern, $callback, $text);

@@ -690,12 +690,27 @@ class CasLayoutBase extends LayoutBase {
    */
   protected function getAdditionalBlockSettings($block, string $row, LayoutMigrationItem $item) {
     $additional = [];
-    // Set a default padding.
-    $additional['bootstrap_styles']['block_style']['padding']['class'] = 'p-4-5';
-    if ($block->bundle() === 'paragraph_block' && $block->get('field_styles') && (
-        ($row == 'blb_region_col_1' && str_contains($block->get('field_styles')->value, 'black-bg-left'))
-        || ($row == 'blb_region_col_2' && str_contains($block->get('field_styles')->value, 'black-bg-right')))) {
-      // 2 column additional settings
+    // Set a default padding. Accordions get the tighter p-2 (0.5rem).
+    $default_padding = $block->bundle() === 'osu_accordion' ? 'p-2' : 'p-4-5';
+    $additional['bootstrap_styles']['block_style']['padding']['class'] = $default_padding;
+    // D7 larch 2-col styles paint one column: black-bg-left/right and
+    // orange-bg-left/right (#d73f09 with white text).
+    $colored_column_bg = NULL;
+    if ($block->bundle() === 'paragraph_block' && $block->get('field_styles') && $block->get('field_styles')->value !== NULL) {
+      $styles = $block->get('field_styles')->value;
+      if (($row == 'blb_region_col_1' && str_contains($styles, 'black-bg-left'))
+        || ($row == 'blb_region_col_2' && str_contains($styles, 'black-bg-right'))) {
+        $colored_column_bg = 'osu-bg-page-alt-2';
+      }
+      elseif (($row == 'blb_region_col_1' && str_contains($styles, 'orange-bg-left'))
+        || ($row == 'blb_region_col_2' && str_contains($styles, 'orange-bg-right'))) {
+        $colored_column_bg = 'osu-bg-osuorange';
+      }
+    }
+    if ($colored_column_bg !== NULL) {
+      // 2 column additional settings. No padding or margin classes: the
+      // blocks inside the column carry their own spacing already. h-100 so
+      // the colour fills the full row height like D7's span backgrounds.
       $additional = [
         'bootstrap_styles' => [
           'block_style' => [
@@ -703,17 +718,19 @@ class CasLayoutBase extends LayoutBase {
               'background_type' => 'color',
             ],
             'background_color' => [
-              'class' => 'osu-bg-page-alt-2',
+              'class' => $colored_column_bg,
             ],
             'text_color' => [
               'class' => 'osu-text-bucktoothwhite',
             ],
-            'padding' => [
-              'class' => 'p-3',
-            ],
-            'margin' => [
-              'class' => 'm-1',
-            ],
+          ],
+        ],
+        'component_attributes' => [
+          'block_attributes' => [
+            'id' => '',
+            'class' => 'h-100',
+            'style' => '',
+            'data' => '',
           ],
         ],
       ];
@@ -762,7 +779,9 @@ class CasLayoutBase extends LayoutBase {
             // D7 rendered column text over these background images inside a
             // translucent white padded box (osu_paragraphs.css:
             // .field-item .field-item { background: rgba(255,255,255,.85) }).
-            "class" => "osu-bg-trans-white p-3",
+            // Image-only columns (empty body) get no box — it would render
+            // as an empty translucent strip on top of the image.
+            "class" => $block->get('body')->value !== NULL ? "osu-bg-trans-white p-3" : "",
             "style" => "",
             "data" => "",
           ],
@@ -973,13 +992,9 @@ class CasLayoutBase extends LayoutBase {
       $section->setLayoutSettings($settings);
     }
     elseif ($item->getType() == 'paragraph_2_col') {
-      if ($block->get('field_styles')->value !== NULL &&
-        (str_contains($block->get('field_styles')->value, 'black-bg-left') ||
-          str_contains($block->get('field_styles')->value, 'black-bg-right'))) {
-        $settings['container_wrapper']['bootstrap_styles']['background']['background_type'] = 'color';
-        $settings['container_wrapper']['bootstrap_styles']['background_color']['class'] = 'osu-bg-page-alt-2';
-        $settings['container_wrapper']['bootstrap_styles']['text_color']['class'] = 'osu-text-bucktoothwhite';
-      }
+      // NOTE: black/orange-bg-left/right paint ONE column, not the section —
+      // handled per-block in getAdditionalBlockSettings(); the other column
+      // stays on the page background like D7.
 
       // Set two-columns to a min of 600px.
       $settings['container_wrapper']['bootstrap_styles']['min_height'] = ['class' => 'osu-min-h-600'];

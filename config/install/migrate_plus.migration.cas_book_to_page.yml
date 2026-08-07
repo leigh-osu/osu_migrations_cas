@@ -77,6 +77,23 @@ process:
       # paragraph sections (body weight 1, field_paragraph weight 2+).
       - '@default_temp'
       - '@paragraphs_temp'
+  # Header banner (D7 field_picture image -> D10 media reference; rendered
+  # as a banner section prepended to the layout by
+  # scripts-dev/backfill_page_banner_images.php at the end of the rebuild).
+  field_page_banner_image:
+    plugin: sub_process
+    source: field_picture
+    process:
+      target_id:
+        - plugin: migration_lookup
+          migration:
+            - upgrade_d7_media_images
+            - cas_media_private_images
+          source: fid
+          no_stub: true
+        - plugin: skip_on_empty
+          method: process
+
   type:
     plugin: default_value
     default_value: page
