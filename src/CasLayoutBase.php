@@ -732,6 +732,18 @@ class CasLayoutBase extends LayoutBase {
             'style' => '',
             'data' => '',
           ],
+          'block_title_attributes' => [
+            'id' => '',
+            'class' => '',
+            'style' => '',
+            'data' => '',
+          ],
+          'block_content_attributes' => [
+            'id' => '',
+            'class' => '',
+            'style' => '',
+            'data' => '',
+          ],
         ],
       ];
     }
