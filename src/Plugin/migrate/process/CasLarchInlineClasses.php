@@ -124,7 +124,73 @@ class CasLarchInlineClasses extends ProcessPluginBase {
         $text
       );
     }
-    return $text;
+    return static::normalizeButtons($text);
+  }
+
+  /**
+   * Normalizes legacy D7 button markup to the CAS light scheme.
+   *
+   * D7 content carries Bootstrap-2/3 and larch-palette button variants
+   * (btn-primary, btn-stratosphere, btn-moondust, color-active, inline
+   * color styles, btn-large/small/mini sizes). CAS buttons are one look:
+   * btn cas-button-light (manzanita), so drop the variant/color junk, map
+   * the old size names, and let the scheme own the colors.
+   */
+  public static function normalizeButtons(?string $text): ?string {
+    if ($text === NULL || $text === '' || stripos($text, 'btn') === FALSE) {
+      return $text;
+    }
+    $dom = \Drupal\Component\Utility\Html::load($text);
+    $xpath = new \DOMXPath($dom);
+    $changed = FALSE;
+    $size_map = [
+      'btn-large' => 'btn-lg',
+      'btn-small' => 'btn-sm',
+      'btn-mini' => 'btn-sm',
+      'btn-block' => 'w-100',
+    ];
+    foreach ($xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " btn ")]') as $el) {
+      $classes = preg_split('~\s+~', trim($el->getAttribute('class')));
+      $out = [];
+      $orange = FALSE;
+      foreach ($classes as $class) {
+        // D7 rendered btn-primary/btn-osu as OSU orange with white text
+        // (osu_buttons.css) -- those become the dark scheme.
+        if (preg_match('~^(btn-primary;?|btn-osu|osu-btn-primary)$~', $class)) {
+          $orange = TRUE;
+          $changed = TRUE;
+          continue;
+        }
+        if ($class === 'color-active'
+          || preg_match('~^btn-(secondary|info|success|warning|danger|default|navbar|link|inverse|stratosphere|teal|reindeer-moss|moondust|sand|pine-stand|luminance)$~', $class)) {
+          $changed = TRUE;
+          continue;
+        }
+        $out[] = $size_map[$class] ?? $class;
+        if (isset($size_map[$class])) {
+          $changed = TRUE;
+        }
+      }
+      if (!in_array('cas-button-light', $out, TRUE) && !in_array('cas-button-dark', $out, TRUE)) {
+        $out[] = $orange ? 'cas-button-dark' : 'cas-button-light';
+        $changed = TRUE;
+      }
+      $el->setAttribute('class', implode(' ', array_unique($out)));
+      $style = $el->getAttribute('style');
+      if ($style !== '') {
+        $clean = trim(preg_replace('~(?:^|;)\s*(?:color|background(?:-color)?)\s*:[^;]*~i', '', $style), "; \t");
+        if ($clean !== $style) {
+          $changed = TRUE;
+          if ($clean === '') {
+            $el->removeAttribute('style');
+          }
+          else {
+            $el->setAttribute('style', $clean);
+          }
+        }
+      }
+    }
+    return $changed ? \Drupal\Component\Utility\Html::serialize($dom) : $text;
   }
 
   /**
