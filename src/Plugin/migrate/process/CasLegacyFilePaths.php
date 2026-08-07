@@ -88,13 +88,38 @@ class CasLegacyFilePaths extends ProcessPluginBase {
     }
 
     $rel_decoded = rawurldecode($rel);
+
+    // D6-era imagecache URLs (…/files/main/imagecache/<preset>/<rest>): the
+    // derivative directories no longer exist and many of the originals were
+    // reorganised. Try, in order: the path with the imagecache/<preset>/
+    // segment stripped (with and without the leading prefix), then a unique
+    // basename match anywhere in the D7 files tree (preferring non-styles,
+    // non-'mainsite' copies).
+    if (preg_match('~^(?<pre>(?:[^/]+/)*?)imagecache/[^/]+/(?<rest>.+)$~', $rel_decoded, $ic)) {
+      $candidates = array_unique([$ic['pre'] . $ic['rest'], $ic['rest']]);
+      $rel_decoded = NULL;
+      foreach ($candidates as $candidate) {
+        if (file_exists('public://' . $candidate) || file_exists(self::d7FilesPath() . '/' . $candidate)) {
+          $rel_decoded = $candidate;
+          break;
+        }
+      }
+      if ($rel_decoded === NULL) {
+        $rel_decoded = self::findByBasename(basename($ic['rest']));
+      }
+      if ($rel_decoded === NULL) {
+        \Drupal::logger('osu_migrations_cas')->warning(
+          'Legacy imagecache URL @url: no original found; left as-is.',
+          ['@url' => $url]
+        );
+        return self::$resolved[$url] = NULL;
+      }
+    }
+
     $destination = 'public://' . $rel_decoded;
 
     if (!file_exists($destination)) {
-      $d7_files = rtrim(Settings::get(
-        'cas_migrate_d7_files_path',
-        '/var/www/d7/sites/agscid7/files'
-      ), '/');
+      $d7_files = self::d7FilesPath();
       $source = $d7_files . '/' . $rel_decoded;
       if (!file_exists($source) && strcasecmp($site_dir, 'default') === 0) {
         $source = dirname($d7_files) . '/../default/files/' . $rel_decoded;
@@ -125,6 +150,63 @@ class CasLegacyFilePaths extends ProcessPluginBase {
     // is valid regardless of how the original was encoded.
     $encoded = implode('/', array_map('rawurlencode', explode('/', $rel_decoded)));
     return self::$resolved[$url] = self::NEW_PREFIX . $encoded;
+  }
+
+  /**
+   * The D7 files tree path (settings override or the ddev mount default).
+   */
+  protected static function d7FilesPath(): string {
+    return rtrim(Settings::get(
+      'cas_migrate_d7_files_path',
+      '/var/www/d7/sites/agscid7/files'
+    ), '/');
+  }
+
+  /**
+   * Finds a file in the D7 tree by basename; NULL unless unambiguous.
+   *
+   * Builds a one-time basename index of the tree (styles/ derivative
+   * directories excluded). 'main/' and 'mainsite/' are duplicated trees, so
+   * a main/ + mainsite/ pair still counts as one match (main/ wins).
+   *
+   * @return string|null
+   *   The relative path of the single match, or NULL when absent/ambiguous.
+   */
+  protected static function findByBasename(string $basename): ?string {
+    static $index = NULL;
+    if ($index === NULL) {
+      $index = [];
+      $root = self::d7FilesPath();
+      $flags = \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::CURRENT_AS_PATHNAME;
+      $it = new \RecursiveIteratorIterator(new \RecursiveCallbackFilterIterator(
+        new \RecursiveDirectoryIterator($root, $flags),
+        function ($current, $key, $iterator) {
+          return $iterator->hasChildren() ? basename($current) !== 'styles' : TRUE;
+        }
+      ));
+      $prefix_len = strlen($root) + 1;
+      foreach ($it as $pathname) {
+        $index[basename($pathname)][] = substr($pathname, $prefix_len);
+      }
+    }
+    $matches = $index[$basename] ?? [];
+    // mainsite/ mirrors main/: collapse the pair.
+    $normalized = array_unique(array_map(
+      fn(string $m) => preg_replace('~^mainsite/~', 'main/', $m),
+      $matches
+    ));
+    if (count($normalized) !== 1) {
+      return NULL;
+    }
+    $result = reset($normalized);
+    // The collapse may point at main/ when only the mainsite/ twin exists.
+    if (!file_exists(self::d7FilesPath() . '/' . $result) && !file_exists('public://' . $result)) {
+      $twin = preg_replace('~^main/~', 'mainsite/', $result);
+      if (file_exists(self::d7FilesPath() . '/' . $twin)) {
+        return $twin;
+      }
+    }
+    return $result;
   }
 
   /**
