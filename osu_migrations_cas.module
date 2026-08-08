@@ -351,6 +351,16 @@ function osu_migrations_cas_migration_plugins_alter(array &$migrations) {
       $migration['process'] = _osu_migrations_cas_map_inline_classes($migration['process']);
     }
 
+    // Publications: field_pub_type uses entity_lookup by term name, but the
+    // publication_type vocabulary ships with only six OSU-standard terms and
+    // D7's biblio type names (Journal Article, Report, Conference Paper, ...)
+    // mostly are not among them -- so ~7,900 of 8,171 publications migrated
+    // typeless. entity_generate creates the missing terms with the D7 names.
+    if ($id === 'upgrade_d7_biblio_publication'
+      && ($migration['process']['field_pub_type'][0]['plugin'] ?? NULL) === 'entity_lookup') {
+      $migration['process']['field_pub_type'][0]['plugin'] = 'entity_generate';
+    }
+
     // Plant variety releases: pasted-in typeface/size coding (font-family
     // and font-size styles, <font face/size> tags) is stripped from every
     // rich-text pipeline; bold/italic and other styling survive (Roger,
