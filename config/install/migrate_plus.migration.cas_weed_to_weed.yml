@@ -170,16 +170,13 @@ process:
       format:
         plugin: default_value
         default_value: 'full_html'
+  # Multi-value list keys (environment_container, ...) copied verbatim;
+  # the D10 field is list_string with the D7 allowed values.
   field_weed_favorable_environment:
     plugin: sub_process
     source: field_favorable_environments
     process:
-      value:
-        plugin: osu_media_wysiwyg_filter
-        source: value
-      format:
-        plugin: default_value
-        default_value: 'full_html'
+      value: value
   field_weed_favorable_env_note:
     plugin: sub_process
     source: field_favorable_environment_note
