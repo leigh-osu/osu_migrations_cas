@@ -15,8 +15,9 @@ migration_tags:
 migration_group: null
 label: 'D7 private-scheme images -> media (stock media images cover public only)'
 source:
-  plugin: d7_file_by_type
+  plugin: cas_d7_file_by_type
   scheme: private
+  exclude_webform_only: true
   type: image
   get_alt: true
   get_title: true

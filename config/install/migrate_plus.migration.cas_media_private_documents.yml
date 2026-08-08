@@ -15,8 +15,9 @@ migration_tags:
 migration_group: null
 label: 'D7 private-scheme documents -> media (stock media documents cover public only)'
 source:
-  plugin: d7_file_by_type
+  plugin: cas_d7_file_by_type
   scheme: private
+  exclude_webform_only: true
   type: document
   constants:
     source_base_path: '/var/www/html/docroot'
