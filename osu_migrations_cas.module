@@ -351,6 +351,16 @@ function osu_migrations_cas_migration_plugins_alter(array &$migrations) {
       $migration['process'] = _osu_migrations_cas_map_inline_classes($migration['process']);
     }
 
+    // Remote videos: D7 stored some YouTube media as
+    // youtube://v/<id>/l/<playlist>; the converted watch URL keeps the
+    // playlist as extra path segments, which YouTube's oEmbed endpoint
+    // rejects with a 400. Trim to the bare watch URL.
+    if ($id === 'upgrade_d7_media_remote_video'
+      && isset($migration['process']['field_media_oembed_video'])
+      && is_array($migration['process']['field_media_oembed_video'])) {
+      $migration['process']['field_media_oembed_video'][] = ['plugin' => 'cas_clean_youtube_url'];
+    }
+
     // Publications: field_pub_type uses entity_lookup by term name, but the
     // publication_type vocabulary ships with only six OSU-standard terms and
     // D7's biblio type names (Journal Article, Report, Conference Paper, ...)
