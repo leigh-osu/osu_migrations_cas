@@ -65,7 +65,7 @@ process:
   # field_feature_story_front has no destination on D10 story; intentionally skipped.
 
   # Taxonomies
-  field_tags:
+  field_tax_story_tags:
     plugin: sub_process
     source: field_tags
     process:

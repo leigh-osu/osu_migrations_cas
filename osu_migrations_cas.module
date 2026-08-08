@@ -24,7 +24,7 @@
  * were previously dropped, without modifying the osu_migrations module.
  */
 function osu_migrations_cas_migration_plugins_alter(array &$migrations) {
-  foreach ($migrations as &$migration) {
+  foreach ($migrations as $plugin_id => &$migration) {
     $id = $migration['id'] ?? NULL;
 
     // Menu config: do not migrate OG menus as standalone D10 menus -- they are
@@ -33,6 +33,33 @@ function osu_migrations_cas_migration_plugins_alter(array &$migrations) {
     // lookup against upgrade_d7_menu returns empty -> skip_on_empty), so the OG
     // links land only in the group menus and ~184 empty "menu-og-*" menus are
     // never created. (Book-toc menus are already excluded by OsuMenuFiltered.)
+    // CAS renames the profile's generic "tags" vocabulary to story_tags (it
+    // is referenced only by story nodes). Route the D7 tags vocabulary --
+    // and with it every term and node reference, via the vocabulary
+    // migration_lookup chain -- to the new machine name. The term
+    // migration's derivative stays upgrade_d7_taxonomy_terms__tags (derived
+    // from the D7 machine name), so existing lookups keep working.
+    if ($id === 'upgrade_d7_taxonomy_vocabulary' && isset($migration['process']['vid'])) {
+      array_unshift($migration['process']['vid'], [
+        'plugin' => 'static_map',
+        'source' => 'machine_name',
+        'map' => ['tags' => 'story_tags'],
+        'bypass' => TRUE,
+      ]);
+      // The original first step sourced machine_name itself; it now receives
+      // the mapped value from the pipeline.
+      unset($migration['process']['vid'][1]['source']);
+    }
+
+    // Story tags: don't migrate terms no node references. All live D7 tags
+    // usage is on article/feature_story (both become story); 90 terms have
+    // no usage at all and would land as dead autocomplete clutter.
+    if ($plugin_id === 'upgrade_d7_taxonomy_terms:tags') {
+      $migration['process']['tid'] = [
+        ['plugin' => 'cas_skip_unused_tag_term', 'source' => 'tid'],
+      ];
+    }
+
     if ($id === 'upgrade_d7_menu' && isset($migration['process']['id'])) {
       $orig = $migration['process']['id'];
       // The original is a single static_map step keyed on menu_name; turn it
