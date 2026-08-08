@@ -30,8 +30,11 @@ class CasBiblioReferenceDomain extends OsuBiblioReference {
    *
    * Secondary Author (2) is biblio's EndNote-style convention for the
    * editor of the book/proceedings a chapter appears in; Series Editor
-   * (10) and Editor (14) are literal. Everything else stays an author
-   * (including Corporate Author — an organization credited as author).
+   * (10) and Editor (14) are literal. Contributors placed in the
+   * secondary slot (auth_category 2) with the type left at its Author
+   * default count too — biblio renders the slot, not the type, as
+   * "Secondary Authors". Everything else stays an author (including
+   * Corporate Author — an organization credited as author).
    */
   protected const EDITOR_AUTH_TYPES = [2, 10, 14];
 
@@ -121,7 +124,7 @@ class CasBiblioReferenceDomain extends OsuBiblioReference {
     // which read the editors of edited volumes and chapters as co-authors.
     // Rows carry cid for the cas_biblio_authors term lookup.
     $query = $this->select('biblio_contributor', 'bc');
-    $query->fields('bc', ['auth_type', 'cid']);
+    $query->fields('bc', ['auth_type', 'auth_category', 'cid']);
     $query->fields('bcd', ['name']);
     $query->innerJoin('biblio_contributor_data', 'bcd', 'bc.cid = bcd.cid');
     $query->condition('bc.nid', $nid);
@@ -131,7 +134,8 @@ class CasBiblioReferenceDomain extends OsuBiblioReference {
     $editors = [];
     foreach ($query->execute() as $record) {
       $item = ['cid' => $record['cid'], 'name' => $record['name']];
-      if (in_array((int) $record['auth_type'], self::EDITOR_AUTH_TYPES, TRUE)) {
+      if (in_array((int) $record['auth_type'], self::EDITOR_AUTH_TYPES, TRUE)
+        || (int) $record['auth_category'] === 2) {
         $editors[] = $item;
       }
       else {
