@@ -113,6 +113,20 @@ process:
       format:
         plugin: default_value
         default_value: 'full_html'
+  # D7's field_plant_patent wears the instance label "Quality" and renders
+  # under that label on every PVR (quality ratings on the wheat releases,
+  # legacy breeder addresses on some older nodes) -- it maps to the D10
+  # Quality field, which was previously left unpopulated.
+  field_pvr_quality:
+    plugin: sub_process
+    source: field_plant_patent
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
   field_pvr_other_information:
     plugin: sub_process
     source: field_other_information

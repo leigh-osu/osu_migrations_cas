@@ -350,8 +350,53 @@ function osu_migrations_cas_migration_plugins_alter(array &$migrations) {
     if (!empty($migration['process']) && is_array($migration['process'])) {
       $migration['process'] = _osu_migrations_cas_map_inline_classes($migration['process']);
     }
+
+    // Plant variety releases: pasted-in typeface/size coding (font-family
+    // and font-size styles, <font face/size> tags) is stripped from every
+    // rich-text pipeline; bold/italic and other styling survive (Roger,
+    // 2026-08-07). PVR-only — other types keep their font styling.
+    if ($id === 'cas_pvr_to_pvr' && !empty($migration['process']) && is_array($migration['process'])) {
+      $migration['process'] = _osu_migrations_cas_insert_font_strip($migration['process']);
+    }
   }
   unset($migration);
+}
+
+/**
+ * Recursively inserts cas_strip_font_styling after osu_media_wysiwyg_filter.
+ *
+ * Same walk as _osu_migrations_cas_map_inline_classes(), applied only to
+ * the cas_pvr_to_pvr migration.
+ */
+function _osu_migrations_cas_insert_font_strip(array $process): array {
+  foreach ($process as $key => $pipeline) {
+    if (is_array($pipeline)) {
+      $process[$key] = _osu_migrations_cas_insert_font_strip_pipeline($pipeline);
+    }
+  }
+  return $process;
+}
+
+/**
+ * Processes one destination-field pipeline for font-styling removal.
+ */
+function _osu_migrations_cas_insert_font_strip_pipeline(array $pipeline) {
+  $single = isset($pipeline['plugin']);
+  $steps = $single ? [$pipeline] : $pipeline;
+  if (!$single && !array_is_list($steps)) {
+    return $pipeline;
+  }
+  $result = [];
+  foreach ($steps as $step) {
+    if (is_array($step) && ($step['plugin'] ?? NULL) === 'sub_process' && is_array($step['process'] ?? NULL)) {
+      $step['process'] = _osu_migrations_cas_insert_font_strip($step['process']);
+    }
+    $result[] = $step;
+    if (is_array($step) && ($step['plugin'] ?? NULL) === 'osu_media_wysiwyg_filter') {
+      $result[] = ['plugin' => 'cas_strip_font_styling'];
+    }
+  }
+  return count($result) === 1 && $single ? $result[0] : $result;
 }
 
 /**
