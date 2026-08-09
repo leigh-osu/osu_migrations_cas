@@ -51,6 +51,31 @@ function osu_migrations_cas_migration_plugins_alter(array &$migrations) {
       unset($migration['process']['vid'][1]['source']);
     }
 
+    // AP Title Case on migrated node titles, opt-in by bundle: prose
+    // titles only. Names (profiles), citations (publications),
+    // machine-generated titles (weather, webforms, blocks) and species
+    // pages carrying latin binomials keep their authored casing.
+    $title_case_bundles = [
+      'story', 'page', 'funding_opportunities', 'video',
+      'art_about_agriculture', 'fun_facts', 'project',
+      'plant_variety_release', 'weed', 'image_album',
+      'degree_fact_sheet', 'degree_fact_sheet_graduate',
+    ];
+    $dest = $migration['destination'] ?? [];
+    if (in_array($dest['plugin'] ?? '', ['entity:node', 'entity_complete:node'], TRUE)
+      && in_array($dest['bundle'] ?? $dest['default_bundle'] ?? '', $title_case_bundles, TRUE)
+      && isset($migration['process']['title'])) {
+      $title = $migration['process']['title'];
+      if (is_string($title)) {
+        $title = [['plugin' => 'get', 'source' => $title]];
+      }
+      elseif (isset($title['plugin'])) {
+        $title = [$title];
+      }
+      $title[] = ['plugin' => 'cas_smart_title_case'];
+      $migration['process']['title'] = $title;
+    }
+
     // Story tags: don't migrate terms no node references. All live D7 tags
     // usage is on article/feature_story (both become story); 90 terms have
     // no usage at all and would land as dead autocomplete clutter.
