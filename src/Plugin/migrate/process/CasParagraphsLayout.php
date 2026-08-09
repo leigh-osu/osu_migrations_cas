@@ -161,6 +161,24 @@ class CasParagraphsLayout extends CasLayoutBase {
             $this->appendComponentsToSection($components, $section);
           }
 
+          // The D7 editor's paragraph label becomes the section's
+          // administrative label — the same field the Configure-section
+          // tray offers by hand — so migrated layouts read "Configure
+          // Hero" instead of "Configure Section 3". Only some D7 bundles
+          // carried the field; everything else keeps the positional
+          // fallback.
+          $section_label = $this->migrateDb->select('field_data_field_paragraph_label', 'l')
+            ->fields('l', ['field_paragraph_label_value'])
+            ->condition('l.entity_type', 'paragraphs_item')
+            ->condition('l.entity_id', $item['value'])
+            ->execute()
+            ->fetchField();
+          if (is_string($section_label) && trim($section_label) !== '') {
+            $layout_settings = $section->getLayoutSettings();
+            $layout_settings['label'] = trim($section_label);
+            $section->setLayoutSettings($layout_settings);
+          }
+
           $sections[] = $section;
 
           if($type == 'lp_picbox_grid'){
