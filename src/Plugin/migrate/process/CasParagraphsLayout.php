@@ -28,6 +28,13 @@ use Drupal\osu_migrations_cas\CasLayoutBase;
 class CasParagraphsLayout extends CasLayoutBase {
 
   /**
+   * ID map of the picbox card migration, for block ID -> D7 item lookups.
+   *
+   * @var \Drupal\migrate\Plugin\MigrateIdMapInterface|null
+   */
+  protected $picboxIdMap;
+
+  /**
    * Transform paragraph source values into a Layout Builder sections.
    *
    * @param mixed $value
@@ -392,13 +399,80 @@ class CasParagraphsLayout extends CasLayoutBase {
       $components = [];
       foreach (array_values($chunk) as $index => $block_id) {
         $block_revision_id = $this->blockContentStorage->getLatestRevisionId($block_id);
-        $components[] = $this->createSectionComponent('osu_card', $block_revision_id, 'blb_region_col_' . ($index + 1), [], $index, 'picbox');
+        $component = $this->createSectionComponent('osu_card', $block_revision_id, 'blb_region_col_' . ($index + 1), [], $index, 'picbox');
+        $this->setPicboxComponentTitle($component, $block_id);
+        $components[] = $component;
       }
       $section = $this->createSection('bootstrap_layout_builder:blb_col_' . $columns, []);
       $this->appendComponentsToSection($components, $section);
       $sections[] = $section;
     }
     return $sections;
+  }
+
+  /**
+   * Puts the D7 headline on the card component as its displayed title.
+   *
+   * D7's larch template overlaid field_lp_picbox_box_headline on the image and
+   * printed it independently of the link -- the link field contributed only
+   * its URL, and its own title was disabled at field level (0 of 8,353 items
+   * have one). So the headline has a single home here too: the component
+   * title, with "Display title" switched on, which the picbox view mode
+   * renders as the overlay and Layout Builder exposes for editing.
+   *
+   * The block label is not the source: it carries D7's field_paragraph_label,
+   * a separate field that is as often an editor's admin note ("ranked 9th",
+   * "hort soc - fellows") as a title.
+   *
+   * @param \Drupal\layout_builder\SectionComponent $component
+   *   The card's Layout Builder component.
+   * @param string|int $block_id
+   *   The card block ID.
+   */
+  protected function setPicboxComponentTitle($component, $block_id) {
+    $headline = $this->picboxHeadline($block_id);
+    if ($headline === NULL) {
+      return;
+    }
+    $configuration = $component->get('configuration');
+    $configuration['label'] = $headline;
+    $configuration['label_display'] = 'visible';
+    $component->setConfiguration($configuration);
+  }
+
+  /**
+   * Looks up the D7 headline behind a migrated picbox card block.
+   *
+   * The card migration's ID map gives the D7 field-collection item the block
+   * came from; the headline is read straight off the D7 field table.
+   *
+   * @param string|int $block_id
+   *   The card block ID.
+   *
+   * @return string|null
+   *   The headline text, or NULL when the D7 picbox had none.
+   */
+  protected function picboxHeadline($block_id): ?string {
+    if ($this->picboxIdMap === NULL) {
+      $this->picboxIdMap = \Drupal::service('plugin.manager.migration')
+        ->createInstance('field_collection_field_lp_picbox__to__layout_builder')
+        ->getIdMap();
+    }
+    $source = $this->picboxIdMap->lookupSourceId(['id' => $block_id]);
+    if (empty($source['item_id'])) {
+      return NULL;
+    }
+    $headline = $this->migrateDb->select('field_data_field_lp_picbox_box_headline', 'h')
+      ->fields('h', ['field_lp_picbox_box_headline_value'])
+      ->condition('h.entity_type', 'field_collection_item')
+      ->condition('h.entity_id', $source['item_id'])
+      ->execute()
+      ->fetchField();
+    // D7 editors left stray markup and entities in some headlines; the
+    // component title is plain text.
+    $text = trim(html_entity_decode(strip_tags((string) $headline), ENT_QUOTES, 'UTF-8'));
+    $text = trim(preg_replace('~\s+~u', ' ', $text));
+    return $text === '' ? NULL : $text;
   }
 
 }
