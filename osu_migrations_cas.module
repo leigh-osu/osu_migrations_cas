@@ -430,8 +430,106 @@ function osu_migrations_cas_migration_plugins_alter(array &$migrations) {
     if ($id === 'cas_pvr_to_pvr' && !empty($migration['process']) && is_array($migration['process'])) {
       $migration['process'] = _osu_migrations_cas_insert_font_strip($migration['process']);
     }
+
+    // The same hardcoded /sites/agscid7/files/... URLs also sit in link
+    // fields, where D7 editors pasted them into the URL box. Those never
+    // pass through osu_media_wysiwyg_filter, so the rich-text repair above
+    // misses them; append the bare-URL variant to every link-field pipeline
+    // instead. Runs last so it also covers the pipelines this hook builds
+    // itself (field_pub_url/uri, above).
+    if (!empty($migration['process']) && is_array($migration['process'])) {
+      $migration['process'] = _osu_migrations_cas_repair_link_urls($migration['process']);
+    }
   }
   unset($migration);
+}
+
+/**
+ * Destination link fields that may carry a hardcoded D7 file URL.
+ *
+ * Every link-type field on the CAS site plus the menu_link_content and
+ * redirect base fields — the repair is a no-op on anything that is not a
+ * legacy file URL, so listing a field that never holds one costs nothing.
+ * Add new link fields here when they are introduced.
+ */
+function _osu_migrations_cas_link_destination_fields(): array {
+  return [
+    // Base fields.
+    'link',
+    'redirect_redirect',
+    // block_content.
+    'field_osu_card_link',
+    'field_osu_menu_bar_item_link',
+    // node.
+    'field_course_links',
+    'field_dfs_cascades_campus',
+    'field_dfs_corvallis_campus',
+    'field_dfs_department_link',
+    'field_dfs_ecampus',
+    'field_dfs_example_4_year_plan',
+    'field_dfs_la_grande_campus',
+    'field_dfs_learning_outcomes',
+    'field_dfs_newport_campus',
+    'field_dfs_osu_catalog',
+    'field_dfs_preferred_link',
+    'field_fundop_link',
+    'field_osu_story_external_url',
+    'field_profile_fac_career_links',
+    'field_profile_google_scholar',
+    'field_profile_personal_links',
+    'field_profile_pub_med',
+    'field_profile_pubs_website',
+    'field_profile_researchgate',
+    'field_project_website',
+    'field_pub_doi',
+    'field_pub_pubmed_id',
+    'field_pub_url',
+    'field_weed_management_link',
+  ];
+}
+
+/**
+ * Appends cas_legacy_file_url to every link-field pipeline of a migration.
+ *
+ * Matches both whole-field keys (field_osu_card_link) and column keys
+ * (field_pub_url/uri, link/uri).
+ */
+function _osu_migrations_cas_repair_link_urls(array $process): array {
+  $link_fields = array_flip(_osu_migrations_cas_link_destination_fields());
+  foreach ($process as $key => $pipeline) {
+    if (!is_string($key) || !isset($link_fields[explode('/', $key, 2)[0]])) {
+      continue;
+    }
+    $process[$key] = _osu_migrations_cas_append_link_url_repair($pipeline);
+  }
+  return $process;
+}
+
+/**
+ * Appends the repair step to one destination-field pipeline.
+ */
+function _osu_migrations_cas_append_link_url_repair($pipeline) {
+  if (is_string($pipeline)) {
+    // Shorthand mapping: `field_x: source_name`.
+    $steps = [['plugin' => 'get', 'source' => $pipeline]];
+  }
+  elseif (is_array($pipeline) && isset($pipeline['plugin'])) {
+    $steps = [$pipeline];
+  }
+  elseif (is_array($pipeline) && array_is_list($pipeline)) {
+    $steps = $pipeline;
+  }
+  else {
+    // Keyed structure that is not a plugin definition; leave untouched.
+    return $pipeline;
+  }
+  foreach ($steps as $step) {
+    if (is_array($step) && ($step['plugin'] ?? NULL) === 'cas_legacy_file_url') {
+      return $pipeline;
+    }
+  }
+  $steps[] = ['plugin' => 'cas_legacy_file_url'];
+  return $steps;
 }
 
 /**

@@ -24,6 +24,9 @@ use Drupal\migrate\Row;
  * osu_migrations_cas_migration_plugins_alter(), and rewriteText() is called
  * directly by the CAS plugins that transform rich text internally.
  *
+ * Link fields hold a bare URL rather than markup, so they go through
+ * rewriteUrl() instead — see the cas_legacy_file_url plugin.
+ *
  * @MigrateProcessPlugin(
  *   id = "cas_legacy_file_paths"
  * )
@@ -65,6 +68,41 @@ class CasLegacyFilePaths extends ProcessPluginBase {
       $text = preg_replace_callback($pattern, $callback, $text);
     }
     return $text;
+  }
+
+  /**
+   * Rewrites a legacy D7 file URL held as a whole link-field value.
+   *
+   * Unlike rewriteText(), which finds URLs delimited by quotes or parentheses
+   * inside markup, this matches the entire string: a link field stores the
+   * bare URL, optionally behind a Drupal URI scheme (internal:/…, base:…).
+   * The scheme prefix, the host and any query/fragment are preserved.
+   *
+   * @return string|null
+   *   The rewritten URL, or the original when it is not a legacy file URL or
+   *   the file could not be located.
+   */
+  public static function rewriteUrl(?string $url): ?string {
+    if ($url === NULL || $url === '' || stripos($url, '/files/') === FALSE) {
+      return $url;
+    }
+    $matched = preg_match(
+      '~^(?<scheme>internal:|base:)?(?<host>https?://[^/]+)?/sites/(?<dir>agscid7|agsci|default)/files/(?<rel>[^?#]+)(?<suffix>[?#].*)?$~i',
+      $url,
+      $m
+    );
+    if (!$matched) {
+      return $url;
+    }
+    // resolve() keys its cache — and its host check for the shared
+    // sites/default directory — on the plain URL, so hand it the value with
+    // the Drupal scheme prefix removed.
+    $new = self::resolve(
+      $m['host'] . '/sites/' . $m['dir'] . '/files/' . $m['rel'],
+      $m['dir'],
+      $m['rel']
+    );
+    return $new === NULL ? $url : $m['scheme'] . $m['host'] . $new . ($m['suffix'] ?? '');
   }
 
   /**
