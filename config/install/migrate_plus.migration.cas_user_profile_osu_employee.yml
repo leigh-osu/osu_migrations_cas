@@ -67,17 +67,14 @@ process:
         - plugin: skip_on_empty
           method: row
 
-  # Headquarters (D7 list_text keys -> labels).
+  # Headquarters. D7 stores the list_text key ('01'..'05') and D10 is a
+  # list_string with the same keys and labels, so the raw value carries over
+  # untouched. It used to be mapped to the label because the D10 field was a
+  # plain string; storing labels meant the value could not be validated,
+  # filtered or relabelled without editing every profile.
   field_profile_headquarters:
-    - plugin: static_map
+    - plugin: get
       source: headquarters/0/value
-      map:
-        '01': 'OSU Main Campus'
-        '02': 'Cascades Campus'
-        '03': 'Hatfield Marine Science Center'
-        '04': 'Experiment Station'
-        '05': 'Other'
-      default_value: null
     - plugin: skip_on_empty
       method: process
 
