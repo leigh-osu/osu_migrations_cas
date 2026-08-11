@@ -7,6 +7,7 @@ use Drupal\Core\Site\Settings;
 use Drupal\migrate\MigrateExecutableInterface;
 use Drupal\migrate\ProcessPluginBase;
 use Drupal\migrate\Row;
+use Drupal\osu_migrations_cas\CasFileRelocation;
 
 /**
  * Repairs hardcoded D7 file URLs in rich text, copying unmanaged files.
@@ -137,7 +138,8 @@ class CasLegacyFilePaths extends ProcessPluginBase {
       $candidates = array_unique([$ic['pre'] . $ic['rest'], $ic['rest']]);
       $rel_decoded = NULL;
       foreach ($candidates as $candidate) {
-        if (file_exists('public://' . $candidate) || file_exists(self::d7FilesPath() . '/' . $candidate)) {
+        if (file_exists('public://' . CasFileRelocation::relativePath($candidate))
+          || file_exists(self::d7FilesPath() . '/' . $candidate)) {
           $rel_decoded = $candidate;
           break;
         }
@@ -154,7 +156,11 @@ class CasLegacyFilePaths extends ProcessPluginBase {
       }
     }
 
-    $destination = 'public://' . $rel_decoded;
+    // Root-level files are relocated into a year subdirectory at migrate time,
+    // so the URL has to point at the new location while the D7 source path
+    // stays as it was. CasFileRelocation is the single source of that mapping.
+    $relocated = CasFileRelocation::relativePath($rel_decoded);
+    $destination = 'public://' . $relocated;
 
     if (!file_exists($destination)) {
       $d7_files = self::d7FilesPath();
@@ -186,7 +192,7 @@ class CasLegacyFilePaths extends ProcessPluginBase {
 
     // Re-encode the decoded relative path segment by segment so the new URL
     // is valid regardless of how the original was encoded.
-    $encoded = implode('/', array_map('rawurlencode', explode('/', $rel_decoded)));
+    $encoded = implode('/', array_map('rawurlencode', explode('/', $relocated)));
     return self::$resolved[$url] = self::NEW_PREFIX . $encoded;
   }
 
@@ -238,7 +244,8 @@ class CasLegacyFilePaths extends ProcessPluginBase {
     }
     $result = reset($normalized);
     // The collapse may point at main/ when only the mainsite/ twin exists.
-    if (!file_exists(self::d7FilesPath() . '/' . $result) && !file_exists('public://' . $result)) {
+    if (!file_exists(self::d7FilesPath() . '/' . $result)
+      && !file_exists('public://' . CasFileRelocation::relativePath($result))) {
       $twin = preg_replace('~^main/~', 'mainsite/', $result);
       if (file_exists(self::d7FilesPath() . '/' . $twin)) {
         return $twin;
