@@ -45,15 +45,21 @@ source:
       lp_adjustable_columns: 'paragraph_lp_adjustable_columns__to__layout_builder'
 process:
 
-  # Skip nodes whose serialized Layout Builder section exceeds the
-  # node__layout_builder__layout.layout_builder__layout_section column
-  # size (SQLSTATE[22001] "Data too long"). Add nids here as found.
-  _skip_oversize_layout:
-    plugin: skip_on_value
-    source: nid
-    method: row
-    value:
-      - 233101
+  # There was a _skip_oversize_layout step here holding nid 233101, whose
+  # serialized Layout Builder section exceeded the blob column behind
+  # node__layout_builder__layout.layout_builder__layout_section (65,535 bytes,
+  # SQLSTATE[22001] "Data too long"). That node carries a 121-card picbox
+  # grid, which the layout code of the time emitted as one section of ~300KB.
+  #
+  # The picbox rewrite (v1.0.33, "picbox grids as a Bootstrap grid, one card
+  # per cell") now chunks a grid into one section per row of cols_max cards.
+  # This grid is 4 columns wide, so those 121 cards become ~31 sections of
+  # roughly 10KB each -- every one of them well inside the column. The skip
+  # predated that rewrite and was never revisited, so it is removed.
+  #
+  # If a node ever does overflow the column again the row fails loudly with
+  # SQLSTATE[22001] and is recorded in the migrate message table, rather than
+  # disappearing silently as this one did.
 
   body:
     - plugin: sub_process

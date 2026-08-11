@@ -61,6 +61,8 @@ class CasBiblioReferenceDomain extends OsuBiblioReference {
     $fields['domain_all_affiliates'] = $this->t('Node available on all domains');
     $fields['domain_source'] = $this->t('Node canonical domain');
     $fields['editors'] = $this->t('Editors (contributors with an editor auth_type)');
+    $fields['body'] = $this->t('Node body (the standard field, not biblio_full_text)');
+    $fields['body_format'] = $this->t('Node body text format');
     return $fields;
   }
 
@@ -144,6 +146,27 @@ class CasBiblioReferenceDomain extends OsuBiblioReference {
     }
     $row->setSourceProperty('author', $authors);
     $row->setSourceProperty('editors', $editors);
+
+    // The node body. The stock migration mapped biblio_full_text and, on
+    // finding it always 0, concluded biblio had no body-equivalent column and
+    // left body unmapped (see the biblio-body-and-doi patch). biblio_full_text
+    // is indeed a flag, but the text itself lives in the ordinary body field:
+    // 1,335 of the 8,171 D7 publications have one, 1,325 of those containing
+    // links, and all of it was being dropped. The source is DrupalSqlBase
+    // rather than FieldableEntity, so nothing fetches node fields for us.
+    $body = $this->select('field_data_body', 'b')
+      ->fields('b', ['body_value', 'body_format'])
+      ->condition('b.entity_type', 'node')
+      ->condition('b.entity_id', $nid)
+      ->condition('b.deleted', 0)
+      ->orderBy('b.delta')
+      ->range(0, 1)
+      ->execute()
+      ->fetchAssoc();
+    if ($body && trim((string) $body['body_value']) !== '') {
+      $row->setSourceProperty('body', $body['body_value']);
+      $row->setSourceProperty('body_format', $body['body_format']);
+    }
 
     return $result;
   }

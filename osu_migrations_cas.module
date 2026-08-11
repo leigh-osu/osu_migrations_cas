@@ -257,6 +257,21 @@ function osu_migrations_cas_migration_plugins_alter(array &$migrations) {
         ['plugin' => 'get', 'source' => 'domain_source'],
       ];
 
+      // The node body, fetched by cas_biblio_reference_domain. The stock
+      // migration leaves body unmapped because biblio_full_text is a flag
+      // rather than text, but the real body field holds content on 1,335 of
+      // the 8,171 D7 publications -- 1,325 of them with links, which the
+      // media fidelity audit surfaced as the largest single content loss.
+      // osu_media_wysiwyg_filter goes first so the rich-text repairs
+      // (larch classes, legacy file paths, media-token links) are appended to
+      // this pipeline too by _osu_migrations_cas_map_inline_classes() below.
+      $migration['process']['body/value'] = [
+        ['plugin' => 'osu_media_wysiwyg_filter', 'source' => 'body'],
+      ];
+      $migration['process']['body/format'] = [
+        ['plugin' => 'default_value', 'default_value' => 'full_html'],
+      ];
+
       // CAS field additions the stock migration drops (see the biblio audit,
       // 2026-08-03): the publication URL, ISBN, publisher city, keywords,
       // and a type-aware home for biblio_secondary_title, which is the
