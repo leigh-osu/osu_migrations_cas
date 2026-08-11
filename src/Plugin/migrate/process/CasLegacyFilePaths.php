@@ -156,6 +156,22 @@ class CasLegacyFilePaths extends ProcessPluginBase {
       }
     }
 
+    // Editors' markup often keeps a path from before a D7 reorganisation:
+    // node 4774 links /sites/agsci/files/main/aaa/artwork/thumb/<name> for
+    // images that actually sit in art/artwork/thumb/. The file is there, just
+    // not where the URL says, so a path-only check drops it and
+    // strip_dead_legacy_refs.php then removes the reference -- 175 files
+    // across 79 pages in the media fidelity audit. Fall back to locating the
+    // file by basename, exactly as the imagecache branch above already does.
+    // findByBasename() returns NULL unless the match is unique, so an
+    // ambiguous name is left alone rather than resolved to the wrong file.
+    if (!file_exists(self::d7FilesPath() . '/' . $rel_decoded)) {
+      $by_basename = self::findByBasename(basename($rel_decoded));
+      if ($by_basename !== NULL) {
+        $rel_decoded = $by_basename;
+      }
+    }
+
     // Root-level files are relocated into a year subdirectory at migrate time,
     // so the URL has to point at the new location while the D7 source path
     // stays as it was. CasFileRelocation is the single source of that mapping.
@@ -239,6 +255,25 @@ class CasLegacyFilePaths extends ProcessPluginBase {
       fn(string $m) => preg_replace('~^mainsite/~', 'main/', $m),
       $matches
     ));
+    // Directories were renamed over the years without the old copy being
+    // removed, so one basename often resolves to several byte-identical
+    // files: Sara-Aikins200.jpg sits in both ambassadors/2009-10/ and
+    // ambassadors-agriculture-forestry-and-natural-resources/2009-10/. Of the
+    // 155 filenames the media fidelity audit found missing, 94 were blocked
+    // by that ambiguity alone. When every candidate is the same size they are
+    // the same image and any of them will do; differing sizes stay ambiguous
+    // and are left alone rather than guessed at.
+    if (count($normalized) > 1) {
+      $sizes = [];
+      foreach ($normalized as $candidate) {
+        $path = self::d7FilesPath() . '/' . $candidate;
+        $sizes[] = file_exists($path) ? filesize($path) : NULL;
+      }
+      $sizes = array_unique($sizes, SORT_REGULAR);
+      if (count($sizes) === 1 && reset($sizes) !== NULL) {
+        $normalized = [reset($normalized)];
+      }
+    }
     if (count($normalized) !== 1) {
       return NULL;
     }
