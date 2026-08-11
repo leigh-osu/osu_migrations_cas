@@ -707,7 +707,19 @@ class CasLayoutBase extends LayoutBase {
         $colored_column_bg = 'osu-bg-osuorange';
       }
     }
-    if ($colored_column_bg !== NULL) {
+    // A column can carry both a colour style and a background image (359 of
+    // the 1,335 D7 paragraphs with a 2-col background image also set a
+    // black-bg-*/orange-bg-* style). The colour branch below used to win the
+    // if/elseif outright and the image was silently dropped, costing 97
+    // migrated columns their background. Only one background_type can be
+    // stored, so the image takes it -- but the colour is not lost with it:
+    // it is re-applied as background_color inside the image branch, which
+    // bootstrap_styles honours for every type except video.
+    $has_background_image = $item->getType() == 'paragraph_2_col'
+      && $block->hasField('field_eb_background_fc')
+      && $block->get('field_eb_background_fc')->value !== NULL;
+
+    if ($colored_column_bg !== NULL && !$has_background_image) {
       // 2 column additional settings. No padding or margin classes: the
       // blocks inside the column carry their own spacing already. h-100 so
       // the colour fills the full row height like D7's span backgrounds.
@@ -799,6 +811,17 @@ class CasLayoutBase extends LayoutBase {
           ],
         ],
       ];
+      // The column also carried a D7 colour style: keep it behind the image
+      // rather than discarding it. bootstrap_styles applies
+      // background_color's class for every background_type except video (see
+      // BackgroundColor::build()), so the colour paints under the image the
+      // way D7's CSS layered them, and still shows while the image loads or
+      // if it ever 404s. No text_color here: unlike the colour-only branch,
+      // this one already keeps the text legible with a translucent white box
+      // (osu-bg-trans-white above), which white text would disappear into.
+      if ($colored_column_bg !== NULL) {
+        $additional['bootstrap_styles']['block_style']['background_color']['class'] = $colored_column_bg;
+      }
     }
     elseif ($item->getType() == 'paragraph_1_col' || $item->getType() == '1_column_background_video') {
       if ($block->get('body')->value !== NULL) {
