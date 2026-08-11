@@ -403,6 +403,30 @@ function osu_migrations_cas_migration_plugins_alter(array &$migrations) {
         'upgrade_d7_users_with_roles',
         'cas_d7_active_users',
       ];
+
+      // Record the account the profile describes as data, not as a side
+      // effect of authorship. uid answers "who may edit this"; those coincide
+      // for a migrated profile only because the migration sets the author to
+      // the subject, and they part company the moment an editor creates a
+      // profile on someone else's behalf.
+      //
+      // Same lookup as uid, deliberately without its default_value fallback
+      // to 1: where no account migrated the field stays empty, which is the
+      // truth. 1,381 of the 2,217 profiles are in that position, and only 2
+      // of them have an account matching by email, so uid 1 there means "no
+      // user" rather than "belongs to the admin".
+      $migration['process']['field_profile_user'] = [
+        [
+          'plugin' => 'migration_lookup',
+          'migration' => [
+            'upgrade_d7_users_with_roles',
+            'cas_d7_active_users',
+          ],
+          'source' => 'uid',
+          'no_stub' => TRUE,
+        ],
+        ['plugin' => 'skip_on_empty', 'method' => 'process'],
+      ];
     }
 
     // Editor-entered markup needs two repairs: inline larch text-color
