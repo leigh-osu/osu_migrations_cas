@@ -105,7 +105,8 @@ class CasLayoutBase extends LayoutBase {
       "paragraph_3_col" => "bootstrap_layout_builder:blb_col_3_three_equal_columns",
       "4_column",
       "paragraph_menu" => "bootstrap_layout_builder:blb_col_4_four_equal_columns",
-      "paragraph_2_col" => "bootstrap_layout_builder:blb_col_2_two_equal_columns",
+      "paragraph_2_col",
+      "2_column_views" => "bootstrap_layout_builder:blb_col_2_two_equal_columns",
       "2_column_4_8" => "bootstrap_layout_builder:blb_col_2_33_67",
       "paragraph_2_column_8_4" => "bootstrap_layout_builder:blb_col_2_67_33",
       default => "bootstrap_layout_builder:blb_col_1"

@@ -68,13 +68,22 @@ class CasParagraphsLayout extends CasLayoutBase {
 
     $values = $row->getSourceProperty($sourceField);
     $map = $row->getSource()['constants']['map'];
-    $ignored_bundles = ['viewfield', '2_column_views'];
+    $ignored_bundles = ['viewfield'];
     $sections = [];
     if (is_array($values)) {
       foreach ($values as $delta => $item) {
         try {
           $type = $this->getParagraphType($item['value']);
           if (in_array($type, $ignored_bundles, TRUE)) {
+            continue;
+          }
+          // 2_column_views pairs two view references with two rich-text
+          // columns, and 35 of its 41 live items are text-only — editors
+          // used it as a plain two-column layout. The text columns migrate
+          // like any other 2-col paragraph; the embedded views stay excluded
+          // (views are not migrated), so an item with no text at all has
+          // nothing to show and gets no section.
+          if ($type === '2_column_views' && !$this->twoColumnViewsHasText($item['value'])) {
             continue;
           }
           // Dividers were empty full-width spacer bands in D7, not content.
@@ -101,6 +110,10 @@ class CasParagraphsLayout extends CasLayoutBase {
           elseif ($type == "paragraph_2_column_8_4") {
             $migration_ids[$map['paragraph_2_column_8_4_left']] = "blb_region_col_1";
             $migration_ids[$map['paragraph_2_column_8_4_right']] = "blb_region_col_2";
+          }
+          elseif ($type == "2_column_views") {
+            $migration_ids[$map['2_column_views_left']] = "blb_region_col_1";
+            $migration_ids[$map['2_column_views_right']] = "blb_region_col_2";
           }
           elseif ($type == "paragraph_3_col") {
             $migration_ids[$map['paragraph_3_col_left']] = "blb_region_col_1";
@@ -234,6 +247,35 @@ class CasParagraphsLayout extends CasLayoutBase {
       $types[$id] = $query->execute()->fetchField();
     }
     return $types[$id];
+  }
+
+  /**
+   * Whether a 2_column_views item has anything in its text columns.
+   *
+   * The bundle's view references are excluded from migration, so an item
+   * whose field_left_content and field_right_text are both empty (a
+   * view-only or wholly empty item) yields no section at all.
+   *
+   * @param int|string $itemId
+   *   The D7 paragraphs_item id.
+   *
+   * @return bool
+   *   TRUE when either text column holds a value.
+   */
+  protected function twoColumnViewsHasText($itemId): bool {
+    foreach (['field_data_field_left_content' => 'field_left_content_value',
+      'field_data_field_right_text' => 'field_right_text_value'] as $table => $column) {
+      $value = $this->migrateDb->select($table, 't')
+        ->fields('t', [$column])
+        ->condition('t.entity_type', 'paragraphs_item')
+        ->condition('t.entity_id', $itemId)
+        ->execute()
+        ->fetchField();
+      if (is_string($value) && trim(strip_tags($value)) !== '') {
+        return TRUE;
+      }
+    }
+    return FALSE;
   }
 
   /**

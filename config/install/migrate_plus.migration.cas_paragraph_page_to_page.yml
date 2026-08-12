@@ -24,6 +24,8 @@ source:
       2_column_4_8_right: 'paragraph_2_column_4_8_right__to__layout_builder'
       paragraph_2_column_8_4_left: 'paragraph_2_column_8_4_left__to__layout_builder'
       paragraph_2_column_8_4_right: 'paragraph_2_column_8_4_right__to__layout_builder'
+      2_column_views_left: 'paragraph_2_column_views_left__to__layout_builder'
+      2_column_views_right: 'paragraph_2_column_views_right__to__layout_builder'
       accordian: 'paragraph_accordian__to__layout_builder'
       paragraph_1_col_clean: 'paragraph_1_col_clean__to__layout_builder'
       paragraph_1_col: 'paragraph_1_col__to__layout_builder'
