@@ -429,6 +429,20 @@ function osu_migrations_cas_migration_plugins_alter(array &$migrations) {
       ];
     }
 
+    // Membership roles must reflect what the user held in the group, not who
+    // the user is. The stock pipeline stamps basic_group-content_author on
+    // every membership it creates, which promoted 353 plain D7 members —
+    // no og_users_roles row in that group — to page CRUD, menu management
+    // and edit-group. Grant the role only where the D7 pair actually held
+    // one; everyone else lands as a bare member (insider Member role: view
+    // + update own profile).
+    if ($id === 'upgrade_d7_user_og_memberships' && isset($migration['process']['group_roles'])) {
+      $migration['process']['group_roles'] = [
+        ['plugin' => 'cas_og_membership_role', 'source' => 'etid'],
+        ['plugin' => 'skip_on_empty', 'method' => 'process'],
+      ];
+    }
+
     // Editor-entered markup needs two repairs: inline larch text-color
     // classes (.osu-orange, .larch-white) become native osu-text-* names,
     // and hardcoded /sites/agscid7/files/... URLs are rewritten to the D10
