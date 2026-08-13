@@ -25,7 +25,6 @@ process:
     - plugin: migration_lookup
       migration:
         - upgrade_d7_node_og_group
-        - upgrade_d7_node_parent_unit_group
       no_stub: true
       source: gid
     - plugin: skip_on_empty
@@ -45,4 +44,3 @@ migration_dependencies:
   required:
     - cas_d7_active_users
     - upgrade_d7_node_og_group
-    - upgrade_d7_node_parent_unit_group

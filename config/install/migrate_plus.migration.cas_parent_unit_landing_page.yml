@@ -1,0 +1,129 @@
+langcode: en
+status: true
+id: cas_parent_unit_landing_page
+label: 'CAS: landing pages for the parent-unit replacement groups'
+migration_group: osu_groups
+dependencies: {  }
+migration_tags:
+  - Drupal 7 OG
+  - OSU Groups Structure
+  - OSU Groups
+  - OSU
+  - CAS
+# The "one new page set as the default" for the two replacement groups
+# (cas_parent_unit_default_group). The D7 parent-unit node's body and
+# paragraphs -- the /aes and /farmunit landing pages -- become a Basic page
+# whose title matches the group label, which is the landing-page convention
+# the header and breadcrumbs resolve. The D7 alias is kept so /aes and
+# /farmunit still work.
+source:
+  plugin: d7_node_domain_access
+  node_type: parent_unit
+  constants:
+    # map paragraph types on pages to their corresponding migration filenames
+    map:
+      1_column_full_width: 'paragraph_1_column_full_width__to__layout_builder'
+      2_column_4_8_left: 'paragraph_2_column_4_8_left__to__layout_builder'
+      2_column_4_8_right: 'paragraph_2_column_4_8_right__to__layout_builder'
+      paragraph_2_column_8_4_left: 'paragraph_2_column_8_4_left__to__layout_builder'
+      paragraph_2_column_8_4_right: 'paragraph_2_column_8_4_right__to__layout_builder'
+      2_column_views_left: 'paragraph_2_column_views_left__to__layout_builder'
+      2_column_views_right: 'paragraph_2_column_views_right__to__layout_builder'
+      accordian: 'paragraph_accordian__to__layout_builder'
+      paragraph_1_col_clean: 'paragraph_1_col_clean__to__layout_builder'
+      paragraph_1_col: 'paragraph_1_col__to__layout_builder'
+      paragraph_2_col_left: 'paragraph_2_col_left__to__layout_builder'
+      paragraph_2_col_right: 'paragraph_2_col_right__to__layout_builder'
+      paragraph_3_col_left: 'paragraph_3_col_left__to__layout_builder'
+      paragraph_3_col_center: 'paragraph_3_col_center__to__layout_builder'
+      paragraph_3_col_right: 'paragraph_3_col_right__to__layout_builder'
+      4_column_col1: 'paragraph_4_column_col1__to__layout_builder'
+      4_column_col2: 'paragraph_4_column_col2__to__layout_builder'
+      4_column_col3: 'paragraph_4_column_col3__to__layout_builder'
+      4_column_col4: 'paragraph_4_column_col4__to__layout_builder'
+      paragraph_accordion: 'paragraph_accordion__to__layout_builder'
+      alert_message: 'paragraph_alert_message__to__layout_builder'
+      paragraph_menu: 'paragraph_menu__to__layout_builder'
+      sacnas_officer_body_text: 'paragraph_sacnas_officer_body_text__to__layout_builder'
+      lp_adjustable_columns: 'paragraph_lp_adjustable_columns__to__layout_builder'
+      lp_picbox_grid: 'paragraph_lp_picbox_grid__to__layout_builder'
+      lp_vertical_tabs: 'paragraph_lp_vertical_tabs__to__layout_builder'
+      1_column_background_video: 'paragraph_1_column_background_video__to__layout_builder'
+process:
+  only_replacements:
+    - plugin: static_map
+      source: nid
+      map:
+        26734: 26734
+        43: 43
+      default_value: 0
+    - plugin: skip_on_empty
+      method: row
+      message: 'parent unit superseded by its default group'
+  type:
+    plugin: default_value
+    default_value: page
+  title:
+    - plugin: get
+      source: title
+    - plugin: callback
+      callable: trim
+  status: status
+  uid:
+    plugin: default_value
+    default_value: 1
+  body:
+    - plugin: sub_process
+      source: body
+      process:
+        value:
+          plugin: osu_media_wysiwyg_filter
+          source: value
+        summary: summary
+        format:
+          plugin: default_value
+          default_value: 'full_html'
+  path/pathauto:
+    plugin: default_value
+    default_value: 0
+  # The D7 aliases, set explicitly: the node source carries no alias property,
+  # and the D7 url_alias rows for parent-unit nodes are skipped by the
+  # upgrade_d7_url_alias alter (their /node/<nid> targets do not exist in D10).
+  path/alias:
+    plugin: static_map
+    source: nid
+    map:
+      26734: /aes
+      43: /farmunit
+    default_value: ''
+  default_temp:
+    plugin: default_layout
+    bundle: page
+  paragraphs_temp:
+    plugin: cas_paragraphs_layout
+    source_field: field_paragraph
+  layout_builder__layout:
+    plugin: get
+    source:
+      - '@default_temp'
+      - '@paragraphs_temp'
+  field_domain_access:
+    - plugin: sub_process
+      source: domain_access_node
+      process:
+        target_id: target_id
+  field_domain_all_affiliates:
+    - plugin: get
+      source: domain_all_affiliates
+  field_domain_source:
+    - plugin: get
+      source: domain_source
+destination:
+  plugin: 'entity:node'
+  bundle: page
+migration_dependencies:
+  required:
+    - upgrade_d7_files
+    - upgrade_d7_users_with_roles
+    - upgrade_d7_media_images
+  optional: [ ]

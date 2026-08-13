@@ -1,7 +1,7 @@
 langcode: en
 status: true
-id: cas_node_parent_unit_group
-label: 'CAS: Create Groups that were Parent Units (with fields)'
+id: cas_parent_unit_default_group
+label: 'CAS: Groups replacing the two parent units that had no default group'
 migration_group: osu_groups
 dependencies: {  }
 migration_tags:
@@ -10,41 +10,49 @@ migration_tags:
   - OSU Groups
   - OSU
   - CAS
+# Parent units are not migrated: in D7 they were a hierarchy tier above the
+# groups, never held content, and their header link resolved to a "default"
+# content group (the department's real group). That default is recorded on
+# each child group's field_group_parent instead (see cas_node_og_group).
+# Agricultural Experiment Station (26734) and Corvallis Farm Unit (43) were
+# the two parent units WITHOUT a default group -- their /aes and /farmunit
+# landing pages were the destination -- so they alone become groups, with the
+# landing page migrated as the group's default page by
+# cas_parent_unit_landing_page.
 source:
-  # Domain-aware node source: adds domain_access_node, domain_all_affiliates
-  # and domain_source (D7 machine names = D10 domain ids).
   plugin: d7_node_domain_access
   node_type: parent_unit
 process:
-  # Leave id as the source nid - it is used for group menu/content lookups.
+  # Only the two parent units without a default group become groups.
+  only_replacements:
+    - plugin: static_map
+      source: nid
+      map:
+        26734: 26734
+        43: 43
+      default_value: 0
+    - plugin: skip_on_empty
+      method: row
+      message: 'parent unit superseded by its default group'
   type:
     plugin: default_value
     default_value: basic_group
+  # Keep the source nid as the group id, matching every other migrated group.
   id: nid
   uid:
     plugin: default_value
     default_value: 1
-  label: title
+  label:
+    - plugin: get
+      source: title
+    - plugin: callback
+      callable: trim
   path/pathauto:
     plugin: default_value
     default_value: 0
-  path/alias: alias
 
-  # Body
-  body:
-    plugin: sub_process
-    source: body
-    process:
-      value:
-        plugin: osu_media_wysiwyg_filter
-        source: value
-      summary: summary
-      format:
-        plugin: default_value
-        default_value: full_html
-
-  # Contact (fields shared with the parent_unit bundle). The D7 email field
-  # stores its value in the `email` property, not `value`, so remap explicitly.
+  # Contact (the parent_unit bundle shared the group contact fields). The D7
+  # email field stores its value in the `email` property, not `value`.
   field_group_email:
     plugin: sub_process
     source: field_group_email
@@ -66,9 +74,7 @@ process:
   field_group_youtube: field_group_youtube
   field_group_instagram: field_group_instagram
 
-  # Domains: same assignment the D7 node had, plus a canonical (home) domain --
-  # the D7-pinned domain_source when set, otherwise derived from the
-  # assignments (single domain, else single non-default, else first).
+  # Domains: same assignment the D7 node had, plus a canonical (home) domain.
   field_domain_access:
     plugin: sub_process
     source: domain_access_node

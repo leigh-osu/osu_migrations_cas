@@ -24,6 +24,41 @@
  * were previously dropped, without modifying the osu_migrations module.
  */
 function osu_migrations_cas_migration_plugins_alter(array &$migrations) {
+  // Parent units are not migrated. In D7 they were a hierarchy tier above the
+  // groups that never held content; CAS records the tier on each group's
+  // field_group_parent (cas_node_og_group), resolved to the parent unit's
+  // default CONTENT group. The two parent units without a default group are
+  // replaced by cas_parent_unit_default_group. Retire the osu_migrations
+  // migration that would create the 12 umbrella groups, and scrub it from
+  // every migration_lookup chain and dependency list that names it (e.g.
+  // upgrade_d7_user_og_memberships) so those pipelines keep running.
+  unset($migrations['upgrade_d7_node_parent_unit_group']);
+  foreach ($migrations as &$scrub_migration) {
+    _osu_migrations_cas_remove_migration_references($scrub_migration, 'upgrade_d7_node_parent_unit_group');
+  }
+  unset($scrub_migration);
+
+  // With no parent-unit nodes in D10, their D7 url_alias rows would migrate
+  // as aliases of nonexistent /node/<nid> paths -- including /aes and
+  // /farmunit, which would then shadow the replacement landing pages'
+  // aliases (alias lookup prefers the newest row). Skip them: extract the
+  // nid from the "node/<nid>" source, blank the twelve parent-unit nids,
+  // and drop the row. Non-node aliases pass through untouched (their second
+  // path segment never matches a parent-unit nid).
+  if (isset($migrations['upgrade_d7_url_alias'])) {
+    $parent_unit_nids = [43, 16090, 25228, 26734, 42846, 45846, 46646, 63586, 95471, 96631, 106121, 108616];
+    $migrations['upgrade_d7_url_alias']['process']['_skip_parent_unit_aliases'] = [
+      ['plugin' => 'explode', 'source' => 'source', 'delimiter' => '/'],
+      ['plugin' => 'extract', 'index' => [1], 'default' => ''],
+      [
+        'plugin' => 'static_map',
+        'map' => array_fill_keys($parent_unit_nids, ''),
+        'default_value' => 'keep',
+      ],
+      ['plugin' => 'skip_on_empty', 'method' => 'row', 'message' => 'alias targets a retired parent-unit node'],
+    ];
+  }
+
   foreach ($migrations as $plugin_id => &$migration) {
     $id = $migration['id'] ?? NULL;
 
@@ -682,4 +717,46 @@ function _osu_migrations_cas_map_inline_classes_pipeline(array $pipeline) {
     }
   }
   return count($result) === 1 && $single ? $result[0] : $result;
+}
+
+/**
+ * Strips a migration id from lookup chains and dependency lists.
+ *
+ * Walks the plugin definition: any migration_lookup whose 'migration' names
+ * the retired id loses that entry (string form included), and
+ * migration_dependencies drop it too. Used to retire
+ * upgrade_d7_node_parent_unit_group without patching osu_migrations.
+ */
+function _osu_migrations_cas_remove_migration_references(array &$definition, string $retired_id): void {
+  $walker = function (&$element) use (&$walker, $retired_id) {
+    if (!is_array($element)) {
+      return;
+    }
+    if (($element['plugin'] ?? NULL) === 'migration_lookup' && isset($element['migration'])) {
+      if (is_array($element['migration'])) {
+        $element['migration'] = array_values(array_diff($element['migration'], [$retired_id]));
+        if (count($element['migration']) === 1) {
+          $element['migration'] = reset($element['migration']);
+        }
+      }
+      elseif ($element['migration'] === $retired_id) {
+        // A lookup against only the retired migration can never resolve;
+        // an empty result keeps the usual skip_on_empty behaviour downstream.
+        $element['migration'] = [];
+      }
+    }
+    foreach ($element as &$child) {
+      $walker($child);
+    }
+  };
+  if (isset($definition['process'])) {
+    $walker($definition['process']);
+  }
+  foreach (['required', 'optional'] as $kind) {
+    if (isset($definition['migration_dependencies'][$kind]) && is_array($definition['migration_dependencies'][$kind])) {
+      $definition['migration_dependencies'][$kind] = array_values(
+        array_diff($definition['migration_dependencies'][$kind], [$retired_id])
+      );
+    }
+  }
 }

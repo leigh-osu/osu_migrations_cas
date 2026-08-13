@@ -46,16 +46,39 @@ process:
   # Group visibility (D7 group_access list_boolean -> D10 boolean)
   field_group_access: group_access
 
-  # Parent Unit reference (D7 field_parent_unit -> the group created from the
-  # parent_unit node by cas_node_parent_unit_group; ids are preserved as nid).
-  field_group_parent_unit:
+  # Group Parent (D7 field_parent_unit resolved to the parent unit's DEFAULT
+  # content group). Parent units are not migrated: they were a hierarchy tier
+  # that never held content, and in D7 the header's parent link effectively
+  # landed in a real group. The static map records that resolution -- derived
+  # from same-named groups, alias prefixes (group short names) and
+  # domain_source; see the 2026-08 audit. 26734 (Agricultural Experiment
+  # Station) and 43 (Corvallis Farm Unit) had no default group, so they map to
+  # the replacement groups cas_parent_unit_default_group creates from them.
+  field_group_parent:
     plugin: sub_process
     source: field_parent_unit
     process:
       target_id:
-        - plugin: migration_lookup
-          migration: cas_node_parent_unit_group
+        - plugin: static_map
           source: target_id
+          map:
+            25228: 16031    # Applied Economics -> Applied Economics
+            42846: 25345    # Biological & Ecological Eng. -> Department of B&EE
+            108616: 184     # Botany and Plant Pathology -> Department of BPP
+            96631: 211056   # COMES -> COMES group
+            16090: 180      # Crop and Soil Science -> Crop and Soil Science
+            45846: 11895    # FWCS -> Department of FWCS
+            63586: 67781    # Horticulture -> Department of Horticulture
+            46646: 16025    # EMT -> EMT group
+            95471: 16023    # Food Science -> Department of FST
+            106121: 67286   # OSU Seafood Lab -> Seafood Research & Education Center
+            26734: 26734    # AES -> replacement group
+            43: 43          # Corvallis Farm Unit -> replacement group
+          default_value: 0
+        - plugin: migration_lookup
+          migration:
+            - cas_parent_unit_default_group
+            - upgrade_d7_node_og_group
           no_stub: true
         - plugin: skip_on_empty
           method: process
@@ -170,7 +193,7 @@ destination:
   plugin: 'entity:group'
 migration_dependencies:
   required:
-    - cas_node_parent_unit_group
+    - cas_parent_unit_default_group
     - upgrade_d7_users_with_roles
     - upgrade_d7_media_documents
   optional: {  }
