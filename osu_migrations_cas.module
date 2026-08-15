@@ -90,6 +90,16 @@ function osu_migrations_cas_migration_plugins_alter(array &$migrations) {
         'plugin' => 'cas_node_canonical_domain',
         'source' => ['domain_source', 'domain_access_node'],
       ];
+
+      // Same migrations (domain-aware node sources): carry D7's og_access
+      // visibility onto field_group_private, enforced by the
+      // cas_group_private node grants in osu_cas_multisite_groups. The
+      // plugin flattens D7's two layers (explicit per-node value, else
+      // inherit from the node's groups) into one members-only boolean.
+      $migration['process']['field_group_private'] = [
+        'plugin' => 'cas_node_group_private',
+        'source' => 'nid',
+      ];
     }
 
     // Menu config: do not migrate OG menus as standalone D10 menus -- they are
@@ -318,8 +328,16 @@ function osu_migrations_cas_migration_plugins_alter(array &$migrations) {
       $migration['process']['field_domain_all_affiliates'] = [
         ['plugin' => 'get', 'source' => 'domain_all_affiliates'],
       ];
+      // Straight to the canonical/private plugins: the generic swap at the
+      // top of this loop already ran for this migration before these domain
+      // properties existed, so it can never catch them here.
       $migration['process']['field_domain_source'] = [
-        ['plugin' => 'get', 'source' => 'domain_source'],
+        'plugin' => 'cas_node_canonical_domain',
+        'source' => ['domain_source', 'domain_access_node'],
+      ];
+      $migration['process']['field_group_private'] = [
+        'plugin' => 'cas_node_group_private',
+        'source' => 'nid',
       ];
 
       // The node body, fetched by cas_biblio_reference_domain. The stock
