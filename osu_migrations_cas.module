@@ -38,6 +38,17 @@ function osu_migrations_cas_migration_plugins_alter(array &$migrations) {
   }
   unset($scrub_migration);
 
+  // Core's d7_path_redirect process prefixes 'internal:/' without checking
+  // for an existing leading slash, so the 14 D7 redirects whose target was
+  // stored as '/path' became 'internal://path' -- a bogus authority that
+  // breaks the redirect. Collapse the double slash after the plugin runs.
+  if (isset($migrations['upgrade_d7_path_redirect']['process']['redirect_redirect/uri'])) {
+    $migrations['upgrade_d7_path_redirect']['process']['redirect_redirect/uri'] = [
+      ['plugin' => 'd7_path_redirect', 'source' => ['redirect', 'redirect_options']],
+      ['plugin' => 'str_replace', 'search' => 'internal://', 'replace' => 'internal:/'],
+    ];
+  }
+
   // With no parent-unit nodes in D10, their D7 url_alias rows would migrate
   // as aliases of nonexistent /node/<nid> paths -- including /aes and
   // /farmunit, which would then shadow the replacement landing pages'
