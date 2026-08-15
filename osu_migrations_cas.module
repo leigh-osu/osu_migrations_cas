@@ -73,6 +73,25 @@ function osu_migrations_cas_migration_plugins_alter(array &$migrations) {
   foreach ($migrations as $plugin_id => &$migration) {
     $id = $migration['id'] ?? NULL;
 
+    // Canonical domain on nodes: replace the plain domain_source copy with
+    // cas_node_canonical_domain, which falls back to the node's only
+    // accessible domain when D7 stored -5 ("use active"). Group-based view
+    // grants union past Domain Access, so unpinned single-domain content
+    // renders on foreign domains with nothing redirecting it home. Applied
+    // to every migration using the domain-aware node source; group
+    // migrations keep cas_group_canonical_domain.
+    $ds = $migration['process']['field_domain_source'] ?? NULL;
+    $is_plain_copy = $ds === 'domain_source'
+      || $ds === ['plugin' => 'get', 'source' => 'domain_source']
+      || (is_array($ds) && count($ds) === 1
+        && (reset($ds) === ['plugin' => 'get', 'source' => 'domain_source']));
+    if ($is_plain_copy && isset($migration['process']['field_domain_access'])) {
+      $migration['process']['field_domain_source'] = [
+        'plugin' => 'cas_node_canonical_domain',
+        'source' => ['domain_source', 'domain_access_node'],
+      ];
+    }
+
     // Menu config: do not migrate OG menus as standalone D10 menus -- they are
     // migrated into per-group menus by cas_og_menu_group_menu. Skipping them
     // here also makes upgrade_d7_menu_links skip their links (its menu_name
