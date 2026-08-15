@@ -546,12 +546,35 @@ class CasLayoutBase extends LayoutBase {
       $attached_block_additional_settings['component_attributes']['block_attributes']['class'] = implode(' ', $classes);
       $attached_block_additional_settings['component_attributes']['block_attributes']['style'] = implode(' ', $styles);
 
-//      'field_lp_col_view',
-//      'field_lp_col_block'
+//      'field_lp_col_view'  -- D7 Views cannot migrate; rebuilt by hand
+//      (scripts-dev/VIEWS_REBUILD_CHECKLIST.md), then placed manually.
 
       $component = $this->createSectionComponent($block_type, $block_revision_id, $row, $attached_block_additional_settings, $index);
 
       $components[] = $component;
+
+      // A column that referenced a live_feeds block (D7 delta = feed nid)
+      // gets an osu_live_feed derivative right behind its inline block --
+      // feed nids are preserved, so the derivative resolves once
+      // cas_feed_to_feed has run, whatever the migration order. Other
+      // modules' block references (one hand-made D7 block) stay manual.
+      $moddelta = $attached_block_extra_data['migration']['adjustable_columns_item']['field_lp_col_block'][0]['moddelta'] ?? '';
+      if (str_starts_with($moddelta, 'live_feeds:')) {
+        $feed_nid = (int) substr($moddelta, strlen('live_feeds:'));
+        $components[] = SectionComponent::fromArray([
+          'uuid' => $this->uuid->generate(),
+          'region' => $row,
+          'configuration' => [
+            'id' => 'osu_live_feed:' . $feed_nid,
+            'label' => 'Live feed',
+            'provider' => 'osu_live_feeds',
+            'label_display' => '0',
+            'context_mapping' => [],
+          ],
+          'additional' => $attached_block_additional_settings,
+          'weight' => $index,
+        ]);
+      }
     }
 
     return $components;
