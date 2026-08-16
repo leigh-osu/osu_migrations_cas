@@ -73,6 +73,17 @@ process:
         default_value: 'full_html'
 
   # Cover photo -> meta image (image -> media reference)
+  # The Student/Faculty/Alumni tagging faces_of_agsci filters on -- the
+  # consolidation to Basic page had dropped it.
+  field_tax_cas_section:
+    plugin: sub_process
+    source: field_cas_section
+    process:
+      target_id:
+        plugin: migration_lookup
+        migration: upgrade_d7_taxonomy_terms:type
+        source: tid
+
   field_osu_meta_image:
     plugin: sub_process
     source: field_cover_photo
