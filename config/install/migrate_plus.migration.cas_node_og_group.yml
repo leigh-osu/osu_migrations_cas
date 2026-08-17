@@ -141,6 +141,30 @@ process:
         plugin: default_value
         default_value: full_html
 
+  # Group footer extras (D7 group_information footer view). Fax, flickr,
+  # google+, pinterest, tiktok, podcast and blog links are dropped by
+  # decision -- between them under a dozen groups carried a value.
+  field_group_map:
+    plugin: sub_process
+    source: field_embedded_map
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: full_html
+  field_group_footer_col4:
+    plugin: sub_process
+    source: field_4th_column_footer
+    process:
+      value:
+        plugin: osu_media_wysiwyg_filter
+        source: value
+      format:
+        plugin: default_value
+        default_value: full_html
+
   # Site coordinators (D7 user_reference -> D10 entity_reference:user)
   field_site_coordinators:
     plugin: sub_process

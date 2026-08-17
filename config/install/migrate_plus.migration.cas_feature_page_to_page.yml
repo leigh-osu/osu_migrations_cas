@@ -84,6 +84,17 @@ process:
         migration: upgrade_d7_taxonomy_terms:type
         source: tid
 
+  # Department (unit term) -- the faces_of_agsci Department filter and the
+  # "More Student Stories" (?tid_1=<unit>) links depend on it.
+  field_tax_department:
+    plugin: sub_process
+    source: field_department
+    process:
+      target_id:
+        plugin: migration_lookup
+        migration: upgrade_d7_taxonomy_terms:unit
+        source: tid
+
   field_osu_meta_image:
     plugin: sub_process
     source: field_cover_photo
@@ -156,7 +167,7 @@ process:
 
   # NOTE: skipped — no clean D10 destination on `page` bundle:
   #   field_subtitle, field_footer, field_cas_section, field_cas_themes,
-  #   field_department, field_sections (D7 field_collection),
+  #   field_sections (D7 field_collection),
   #   group_access, group_content_access, og_group_ref
 
 destination:

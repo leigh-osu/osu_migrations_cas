@@ -62,7 +62,21 @@ process:
       uri: url
       title: title
 
-  # field_feature_story_front has no destination on D10 story; intentionally skipped.
+  # Every migrated feature story is tagged with the 'feature_story' category
+  # so the feature-story listings can find them; D7's "front" flag
+  # (field_feature_story_front) becomes the node's promote flag, which
+  # those listings filter on.
+  field_story_category:
+    plugin: default_value
+    default_value:
+      - value: feature_story
+  promote:
+    plugin: extract
+    source: field_feature_story_front
+    index:
+      - 0
+      - value
+    default: 0
 
   # Taxonomies
   field_tax_story_tags:
@@ -107,7 +121,6 @@ process:
   status: status
   created: created
   changed: changed
-  promote: promote
   sticky: sticky
 
 destination:

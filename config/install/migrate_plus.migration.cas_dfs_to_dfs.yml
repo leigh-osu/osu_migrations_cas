@@ -36,9 +36,16 @@ process:
         default_value: 'full_html'
 
   # Simple text -> string / string_long / text_long passthroughs
+  # D7 stored 45 of these with a NULL format, which D10 renders through the
+  # fallback (plain text) format; force full_html like the body.
   field_dfs_overview:
-    plugin: get
+    plugin: sub_process
     source: field_dfs_introduction
+    process:
+      value: value
+      format:
+        plugin: default_value
+        default_value: 'full_html'
   field_dfs_introduction_header:
     plugin: get
     source: field_dfs_introduction_header
