@@ -40,7 +40,39 @@ class CasLegacyFilePaths extends ProcessPluginBase {
   protected const NEW_PREFIX = '/sites/agsci.oregonstate.edu/files/';
 
   /**
-   * Per-request cache of already-resolved URLs (old => new or NULL to keep).
+   * Regex alternation of the D7 site directories this source's editors used.
+   *
+   * A subclass covering another D7 source (e.g. MMI) overrides this together
+   * with the other class constants; every regex and lookup below binds late
+   * (static::), so the whole resolution pipeline follows.
+   */
+  protected const SITE_DIRS = 'agscid7|agsci|default';
+
+  /**
+   * Substring identifying this site's own hosts in absolute URLs.
+   *
+   * sites/default/files URLs are rewritten only when the host contains it.
+   */
+  protected const HOST_NEEDLE = 'agsci';
+
+  /**
+   * Settings key overriding the D7 files tree path.
+   */
+  protected const D7_FILES_SETTING = 'cas_migrate_d7_files_path';
+
+  /**
+   * Default D7 files tree path (the ddev mount).
+   */
+  protected const D7_FILES_DEFAULT = '/var/www/d7/sites/agscid7/files';
+
+  /**
+   * Logger channel for unresolved-reference warnings.
+   */
+  protected const LOGGER_CHANNEL = 'osu_migrations_cas';
+
+  /**
+   * Per-request cache of already-resolved URLs (old => new or NULL to keep),
+   * keyed by concrete class so sibling subclasses never share entries.
    */
   protected static array $resolved = [];
 
@@ -52,18 +84,19 @@ class CasLegacyFilePaths extends ProcessPluginBase {
       return $text;
     }
     $callback = function (array $match): string {
-      $new = self::resolve($match[0], $match['dir'], $match['rel']);
+      $new = static::resolve($match[0], $match['dir'], $match['rel']);
       return $new ?? $match[0];
     };
+    $dirs = static::SITE_DIRS;
     $patterns = [
       // Quoted src/href values: parentheses, spaces and the *other* quote
       // character are all valid filename characters there, delimited only by
       // the matching closing quote (one pattern per quote type because a
       // lookbehind must be fixed-length).
-      '~(?<=")(?:https?://[^/"]+)?/sites/(?<dir>agscid7|agsci|default)/files/(?<rel>[^"?#]+?)(?:[?#][^"]*)?(?=")~i',
-      "~(?<=')(?:https?://[^/']+)?/sites/(?<dir>agscid7|agsci|default)/files/(?<rel>[^'?#]+?)(?:[?#][^']*)?(?=')~i",
+      '~(?<=")(?:https?://[^/"]+)?/sites/(?<dir>' . $dirs . ')/files/(?<rel>[^"?#]+?)(?:[?#][^"]*)?(?=")~i',
+      "~(?<=')(?:https?://[^/']+)?/sites/(?<dir>" . $dirs . ")/files/(?<rel>[^'?#]+?)(?:[?#][^']*)?(?=')~i",
       // Unquoted CSS url(...) values: parentheses delimit the URL instead.
-      '~(?<=\()(?:https?://[^/"\'()]+)?/sites/(?<dir>agscid7|agsci|default)/files/(?<rel>[^"\'()?#\s]+)(?:[?#][^"\'()]*)?(?=\))~i',
+      '~(?<=\()(?:https?://[^/"\'()]+)?/sites/(?<dir>' . $dirs . ')/files/(?<rel>[^"\'()?#\s]+)(?:[?#][^"\'()]*)?(?=\))~i',
     ];
     foreach ($patterns as $pattern) {
       $text = preg_replace_callback($pattern, $callback, $text);
@@ -88,7 +121,7 @@ class CasLegacyFilePaths extends ProcessPluginBase {
       return $url;
     }
     $matched = preg_match(
-      '~^(?<scheme>internal:|base:)?(?<host>https?://[^/]+)?/sites/(?<dir>agscid7|agsci|default)/files/(?<rel>[^?#]+)(?<suffix>[?#].*)?$~i',
+      '~^(?<scheme>internal:|base:)?(?<host>https?://[^/]+)?/sites/(?<dir>' . static::SITE_DIRS . ')/files/(?<rel>[^?#]+)(?<suffix>[?#].*)?$~i',
       $url,
       $m
     );
@@ -98,7 +131,7 @@ class CasLegacyFilePaths extends ProcessPluginBase {
     // resolve() keys its cache — and its host check for the shared
     // sites/default directory — on the plain URL, so hand it the value with
     // the Drupal scheme prefix removed.
-    $new = self::resolve(
+    $new = static::resolve(
       $m['host'] . '/sites/' . $m['dir'] . '/files/' . $m['rel'],
       $m['dir'],
       $m['rel']
@@ -113,17 +146,18 @@ class CasLegacyFilePaths extends ProcessPluginBase {
    *   The rewritten URL, or NULL to leave the original untouched.
    */
   protected static function resolve(string $url, string $site_dir, string $rel): ?string {
-    if (array_key_exists($url, self::$resolved)) {
-      return self::$resolved[$url];
+    $cache = &self::$resolved[static::class];
+    if (isset($cache) && array_key_exists($url, $cache)) {
+      return $cache[$url];
     }
 
     // sites/default/files also occurs in absolute links to OTHER OSU sites;
     // only rewrite those when the host is (or was) this site. Relative URLs
-    // and the agscid7 directory are unambiguously ours.
+    // and the site's own directories are unambiguously ours.
     if (strcasecmp($site_dir, 'default') === 0
       && preg_match('~^https?://([^/]+)~i', $url, $host)
-      && stripos($host[1], 'agsci') === FALSE) {
-      return self::$resolved[$url] = NULL;
+      && stripos($host[1], static::HOST_NEEDLE) === FALSE) {
+      return $cache[$url] = NULL;
     }
 
     $rel_decoded = rawurldecode($rel);
@@ -138,21 +172,21 @@ class CasLegacyFilePaths extends ProcessPluginBase {
       $candidates = array_unique([$ic['pre'] . $ic['rest'], $ic['rest']]);
       $rel_decoded = NULL;
       foreach ($candidates as $candidate) {
-        if (file_exists('public://' . CasFileRelocation::relativePath($candidate))
-          || file_exists(self::d7FilesPath() . '/' . $candidate)) {
+        if (file_exists('public://' . static::relocatedPath($candidate))
+          || file_exists(static::d7FilesPath() . '/' . $candidate)) {
           $rel_decoded = $candidate;
           break;
         }
       }
       if ($rel_decoded === NULL) {
-        $rel_decoded = self::findByBasename(basename($ic['rest']));
+        $rel_decoded = static::findByBasename(basename($ic['rest']));
       }
       if ($rel_decoded === NULL) {
-        \Drupal::logger('osu_migrations_cas')->warning(
+        \Drupal::logger(static::LOGGER_CHANNEL)->warning(
           'Legacy imagecache URL @url: no original found; left as-is.',
           ['@url' => $url]
         );
-        return self::$resolved[$url] = NULL;
+        return $cache[$url] = NULL;
       }
     }
 
@@ -165,8 +199,8 @@ class CasLegacyFilePaths extends ProcessPluginBase {
     // file by basename, exactly as the imagecache branch above already does.
     // findByBasename() returns NULL unless the match is unique, so an
     // ambiguous name is left alone rather than resolved to the wrong file.
-    if (!file_exists(self::d7FilesPath() . '/' . $rel_decoded)) {
-      $by_basename = self::findByBasename(basename($rel_decoded));
+    if (!file_exists(static::d7FilesPath() . '/' . $rel_decoded)) {
+      $by_basename = static::findByBasename(basename($rel_decoded));
       if ($by_basename !== NULL) {
         $rel_decoded = $by_basename;
       }
@@ -174,22 +208,22 @@ class CasLegacyFilePaths extends ProcessPluginBase {
 
     // Root-level files are relocated into a year subdirectory at migrate time,
     // so the URL has to point at the new location while the D7 source path
-    // stays as it was. CasFileRelocation is the single source of that mapping.
-    $relocated = CasFileRelocation::relativePath($rel_decoded);
+    // stays as it was. relocatedPath() is the single source of that mapping.
+    $relocated = static::relocatedPath($rel_decoded);
     $destination = 'public://' . $relocated;
 
     if (!file_exists($destination)) {
-      $d7_files = self::d7FilesPath();
+      $d7_files = static::d7FilesPath();
       $source = $d7_files . '/' . $rel_decoded;
       if (!file_exists($source) && strcasecmp($site_dir, 'default') === 0) {
         $source = dirname($d7_files) . '/../default/files/' . $rel_decoded;
       }
       if (!file_exists($source)) {
-        \Drupal::logger('osu_migrations_cas')->warning(
+        \Drupal::logger(static::LOGGER_CHANNEL)->warning(
           'Legacy file URL @url: file missing in D10 and on the D7 filesystem; left as-is.',
           ['@url' => $url]
         );
-        return self::$resolved[$url] = NULL;
+        return $cache[$url] = NULL;
       }
       try {
         $file_system = \Drupal::service('file_system');
@@ -198,18 +232,28 @@ class CasLegacyFilePaths extends ProcessPluginBase {
         $file_system->copy($source, $destination, FileExists::Replace);
       }
       catch (\Exception $e) {
-        \Drupal::logger('osu_migrations_cas')->warning(
+        \Drupal::logger(static::LOGGER_CHANNEL)->warning(
           'Legacy file URL @url: copy failed (@msg); left as-is.',
           ['@url' => $url, '@msg' => $e->getMessage()]
         );
-        return self::$resolved[$url] = NULL;
+        return $cache[$url] = NULL;
       }
     }
 
     // Re-encode the decoded relative path segment by segment so the new URL
     // is valid regardless of how the original was encoded.
     $encoded = implode('/', array_map('rawurlencode', explode('/', $relocated)));
-    return self::$resolved[$url] = self::NEW_PREFIX . $encoded;
+    return $cache[$url] = static::NEW_PREFIX . $encoded;
+  }
+
+  /**
+   * Maps a D7-relative file path to its D10 public-filesystem location.
+   *
+   * The agsci migration relocates root-level files into year subdirectories;
+   * sources that keep D7 uris verbatim (MMI) override this to the identity.
+   */
+  protected static function relocatedPath(string $rel): string {
+    return CasFileRelocation::relativePath($rel);
   }
 
   /**
@@ -217,8 +261,8 @@ class CasLegacyFilePaths extends ProcessPluginBase {
    */
   protected static function d7FilesPath(): string {
     return rtrim(Settings::get(
-      'cas_migrate_d7_files_path',
-      '/var/www/d7/sites/agscid7/files'
+      static::D7_FILES_SETTING,
+      static::D7_FILES_DEFAULT
     ), '/');
   }
 
@@ -233,10 +277,11 @@ class CasLegacyFilePaths extends ProcessPluginBase {
    *   The relative path of the single match, or NULL when absent/ambiguous.
    */
   protected static function findByBasename(string $basename): ?string {
-    static $index = NULL;
+    static $indexes = [];
+    $index = &$indexes[static::class];
     if ($index === NULL) {
       $index = [];
-      $root = self::d7FilesPath();
+      $root = static::d7FilesPath();
       $flags = \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::CURRENT_AS_PATHNAME;
       $it = new \RecursiveIteratorIterator(new \RecursiveCallbackFilterIterator(
         new \RecursiveDirectoryIterator($root, $flags),
@@ -266,7 +311,7 @@ class CasLegacyFilePaths extends ProcessPluginBase {
     if (count($normalized) > 1) {
       $sizes = [];
       foreach ($normalized as $candidate) {
-        $path = self::d7FilesPath() . '/' . $candidate;
+        $path = static::d7FilesPath() . '/' . $candidate;
         $sizes[] = file_exists($path) ? filesize($path) : NULL;
       }
       $sizes = array_unique($sizes, SORT_REGULAR);
@@ -279,10 +324,10 @@ class CasLegacyFilePaths extends ProcessPluginBase {
     }
     $result = reset($normalized);
     // The collapse may point at main/ when only the mainsite/ twin exists.
-    if (!file_exists(self::d7FilesPath() . '/' . $result)
-      && !file_exists('public://' . CasFileRelocation::relativePath($result))) {
+    if (!file_exists(static::d7FilesPath() . '/' . $result)
+      && !file_exists('public://' . static::relocatedPath($result))) {
       $twin = preg_replace('~^main/~', 'mainsite/', $result);
-      if (file_exists(self::d7FilesPath() . '/' . $twin)) {
+      if (file_exists(static::d7FilesPath() . '/' . $twin)) {
         return $twin;
       }
     }

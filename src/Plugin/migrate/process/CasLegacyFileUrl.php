@@ -28,18 +28,27 @@ use Drupal\migrate\Row;
 class CasLegacyFileUrl extends ProcessPluginBase {
 
   /**
+   * The companion paths class whose rewriteUrl() this plugin applies.
+   *
+   * A subclass for another D7 source pairs itself with its own
+   * CasLegacyFilePaths subclass by overriding this constant.
+   */
+  protected const PATHS_CLASS = CasLegacyFilePaths::class;
+
+  /**
    * {@inheritdoc}
    */
   public function transform($value, MigrateExecutableInterface $migrate_executable, Row $row, $destination_property) {
-    return self::rewriteValue($value);
+    return static::rewriteValue($value);
   }
 
   /**
    * Rewrites the URLs in one pipeline value, whatever shape it has.
    */
   protected static function rewriteValue($value) {
+    $paths = static::PATHS_CLASS;
     if (is_string($value)) {
-      return CasLegacyFilePaths::rewriteUrl($value);
+      return $paths::rewriteUrl($value);
     }
     if (!is_array($value)) {
       return $value;
@@ -49,7 +58,7 @@ class CasLegacyFileUrl extends ProcessPluginBase {
     // depending on where the step lands in the pipeline.
     foreach (['uri', 'url'] as $key) {
       if (isset($value[$key]) && is_string($value[$key])) {
-        $value[$key] = CasLegacyFilePaths::rewriteUrl($value[$key]);
+        $value[$key] = $paths::rewriteUrl($value[$key]);
         return $value;
       }
     }
@@ -57,7 +66,7 @@ class CasLegacyFileUrl extends ProcessPluginBase {
     // URL column) is left alone.
     if (array_is_list($value)) {
       foreach ($value as $delta => $item) {
-        $value[$delta] = self::rewriteValue($item);
+        $value[$delta] = static::rewriteValue($item);
       }
     }
     return $value;
