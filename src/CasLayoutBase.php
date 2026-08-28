@@ -339,7 +339,7 @@ class CasLayoutBase extends LayoutBase {
       ->load($block_id);
 
     // Menu Paragraph Bundle.
-    if ($item->getMigrationId() == 'paragraph_menu__to__layout_builder') {
+    if (in_array($item->getMigrationId(), $this->menuMigrationIds(), TRUE)) {
       return $this->handleMenuItems($block);
     }
 
@@ -350,8 +350,7 @@ class CasLayoutBase extends LayoutBase {
 
     // Set column settings for 1_col (and its background-video variant, which
     // shares the same content field and p-left/p-right styles vocabulary).
-    if ($item->getMigrationId() === 'paragraph_1_col__to__layout_builder'
-      || $item->getMigrationId() === 'paragraph_1_column_background_video__to__layout_builder') {
+    if (in_array($item->getMigrationId(), $this->oneColMigrationIds(), TRUE)) {
       if ($block->get('field_styles')->value != NULL) {
         if (str_contains($block->get('field_styles')->value, 'left')) {
           $row = 'blb_region_col_1';
@@ -369,6 +368,37 @@ class CasLayoutBase extends LayoutBase {
     $this->setAdditionalSectionSettings($section, $block, $item);
 
     return [$this->createSectionComponent($block_type, $block_revision_id, $row, $additional, $item->getDelta())];
+  }
+
+  /**
+   * The migration ids whose blocks are menu-bar containers.
+   *
+   * The container block's body holds the child menu-bar-item block ids;
+   * createComponent() expands it into one component per item. Subclasses
+   * migrating a different D7 source add their own menu migration id.
+   *
+   * @return string[]
+   *   Migration plugin ids.
+   */
+  protected function menuMigrationIds(): array {
+    return ['paragraph_menu__to__layout_builder'];
+  }
+
+  /**
+   * The migration ids whose blocks use the 1-col left/center/right styles.
+   *
+   * Their D7 styles vocabulary places the block in the left, center or right
+   * region of a 3-column section. Subclasses migrating a different D7 source
+   * add their own 1-col migration id.
+   *
+   * @return string[]
+   *   Migration plugin ids.
+   */
+  protected function oneColMigrationIds(): array {
+    return [
+      'paragraph_1_col__to__layout_builder',
+      'paragraph_1_column_background_video__to__layout_builder',
+    ];
   }
 
   /**

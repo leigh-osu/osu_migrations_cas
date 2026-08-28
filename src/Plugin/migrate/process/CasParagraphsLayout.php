@@ -68,13 +68,21 @@ class CasParagraphsLayout extends CasLayoutBase {
 
     $values = $row->getSourceProperty($sourceField);
     $map = $row->getSource()['constants']['map'];
-    $ignored_bundles = ['viewfield'];
+    $ignored_bundles = $this->ignoredBundles();
     $sections = [];
     if (is_array($values)) {
       foreach ($values as $delta => $item) {
         try {
           $type = $this->getParagraphType($item['value']);
           if (in_array($type, $ignored_bundles, TRUE)) {
+            continue;
+          }
+          // A bundle the subclass renders as a whole section on its own
+          // (e.g. a placeholder for an embedded D7 view) bypasses the
+          // block-component machinery entirely.
+          $bundle_section = $this->createBundleSection($type, $item['value']);
+          if ($bundle_section !== NULL) {
+            $sections[] = $bundle_section;
             continue;
           }
           // 2_column_views pairs two view references with two rich-text
@@ -98,40 +106,7 @@ class CasParagraphsLayout extends CasLayoutBase {
           $section = $this->createSection($sectionType, []);
 
           // Map migration IDs to their layout builder region.
-          $migration_ids = [];
-          if ($type == "paragraph_2_col") {
-            $migration_ids[$map['paragraph_2_col_left']] = "blb_region_col_1";
-            $migration_ids[$map['paragraph_2_col_right']] = "blb_region_col_2";
-          }
-          elseif ($type == "2_column_4_8") {
-            $migration_ids[$map['2_column_4_8_left']] = "blb_region_col_1";
-            $migration_ids[$map['2_column_4_8_right']] = "blb_region_col_2";
-          }
-          elseif ($type == "paragraph_2_column_8_4") {
-            $migration_ids[$map['paragraph_2_column_8_4_left']] = "blb_region_col_1";
-            $migration_ids[$map['paragraph_2_column_8_4_right']] = "blb_region_col_2";
-          }
-          elseif ($type == "2_column_views") {
-            $migration_ids[$map['2_column_views_left']] = "blb_region_col_1";
-            $migration_ids[$map['2_column_views_right']] = "blb_region_col_2";
-          }
-          elseif ($type == "paragraph_3_col") {
-            $migration_ids[$map['paragraph_3_col_left']] = "blb_region_col_1";
-            $migration_ids[$map['paragraph_3_col_center']] = "blb_region_col_2";
-            $migration_ids[$map['paragraph_3_col_right']] = "blb_region_col_3";
-          }
-          elseif ($type == "4_column") {
-            $migration_ids[$map['4_column_col1']] = "blb_region_col_1";
-            $migration_ids[$map['4_column_col2']] = "blb_region_col_2";
-            $migration_ids[$map['4_column_col3']] = "blb_region_col_3";
-            $migration_ids[$map['4_column_col4']] = "blb_region_col_4";
-          }
-          elseif (array_key_exists($type, $map)) {
-            $migration_ids[$map[$type]] = "blb_region_col_1";
-          }
-          else {
-            throw new LayoutMigrationMissingParagraphToLayoutException($this->t('Missing custom paragraph migration for paragraph type @type.', ['@type' => $type]));
-          }
+          $migration_ids = $this->getRegionMigrationIds($type, $map);
 
           // Iterate through migration_ids creating components for each block and attaching to section.
           foreach ($migration_ids as $migration_id => $migration_row) {
@@ -187,12 +162,7 @@ class CasParagraphsLayout extends CasLayoutBase {
           // Hero" instead of "Configure Section 3". Only some D7 bundles
           // carried the field; everything else keeps the positional
           // fallback.
-          $section_label = $this->migrateDb->select('field_data_field_paragraph_label', 'l')
-            ->fields('l', ['field_paragraph_label_value'])
-            ->condition('l.entity_type', 'paragraphs_item')
-            ->condition('l.entity_id', $item['value'])
-            ->execute()
-            ->fetchField();
+          $section_label = $this->sectionLabel($item['value']);
           if (is_string($section_label) && trim($section_label) !== '') {
             $layout_settings = $section->getLayoutSettings();
             $layout_settings['label'] = trim($section_label);
@@ -224,6 +194,112 @@ class CasParagraphsLayout extends CasLayoutBase {
     }
 
     return $sections;
+  }
+
+  /**
+   * The D7 editor's label for a paragraph, if the source carries one.
+   *
+   * agsci's field_paragraph_label becomes the section's administrative
+   * label. Subclasses whose D7 source has no such field return NULL.
+   *
+   * @param int|string $itemId
+   *   The D7 paragraphs_item id.
+   *
+   * @return string|null
+   *   The label, or NULL when none exists.
+   */
+  protected function sectionLabel($itemId): ?string {
+    $label = $this->migrateDb->select('field_data_field_paragraph_label', 'l')
+      ->fields('l', ['field_paragraph_label_value'])
+      ->condition('l.entity_type', 'paragraphs_item')
+      ->condition('l.entity_id', $itemId)
+      ->execute()
+      ->fetchField();
+    return is_string($label) ? $label : NULL;
+  }
+
+  /**
+   * Paragraph bundles that produce no section at all.
+   *
+   * Subclasses migrating a different D7 source extend the list (e.g. MMI's
+   * viewfield-only bundles).
+   *
+   * @return string[]
+   *   Bundle machine names.
+   */
+  protected function ignoredBundles(): array {
+    return ['viewfield'];
+  }
+
+  /**
+   * Builds a whole section for a bundle outside the block machinery.
+   *
+   * Default: no bundle qualifies. Subclasses return a Section to bypass the
+   * component pipeline for that bundle (the way dividers are handled), or
+   * NULL to fall through to the normal path.
+   *
+   * @param string $type
+   *   The paragraph bundle.
+   * @param int|string $itemId
+   *   The D7 paragraphs_item id.
+   *
+   * @return \Drupal\layout_builder\Section|null
+   *   The section, or NULL for the normal block-component path.
+   */
+  protected function createBundleSection(string $type, $itemId) {
+    return NULL;
+  }
+
+  /**
+   * Maps a paragraph bundle to migration ids keyed to section regions.
+   *
+   * @param string $type
+   *   The paragraph bundle.
+   * @param array $map
+   *   The bundle => migration-id constants map from the node migration.
+   *
+   * @return array
+   *   Migration id => blb region name.
+   *
+   * @throws \Drupal\paragraphs_to_layout_builder\Exception\LayoutMigrationMissingParagraphToLayoutException
+   *   When no migration covers the bundle.
+   */
+  protected function getRegionMigrationIds(string $type, array $map): array {
+    $migration_ids = [];
+    if ($type == "paragraph_2_col") {
+      $migration_ids[$map['paragraph_2_col_left']] = "blb_region_col_1";
+      $migration_ids[$map['paragraph_2_col_right']] = "blb_region_col_2";
+    }
+    elseif ($type == "2_column_4_8") {
+      $migration_ids[$map['2_column_4_8_left']] = "blb_region_col_1";
+      $migration_ids[$map['2_column_4_8_right']] = "blb_region_col_2";
+    }
+    elseif ($type == "paragraph_2_column_8_4") {
+      $migration_ids[$map['paragraph_2_column_8_4_left']] = "blb_region_col_1";
+      $migration_ids[$map['paragraph_2_column_8_4_right']] = "blb_region_col_2";
+    }
+    elseif ($type == "2_column_views") {
+      $migration_ids[$map['2_column_views_left']] = "blb_region_col_1";
+      $migration_ids[$map['2_column_views_right']] = "blb_region_col_2";
+    }
+    elseif ($type == "paragraph_3_col") {
+      $migration_ids[$map['paragraph_3_col_left']] = "blb_region_col_1";
+      $migration_ids[$map['paragraph_3_col_center']] = "blb_region_col_2";
+      $migration_ids[$map['paragraph_3_col_right']] = "blb_region_col_3";
+    }
+    elseif ($type == "4_column") {
+      $migration_ids[$map['4_column_col1']] = "blb_region_col_1";
+      $migration_ids[$map['4_column_col2']] = "blb_region_col_2";
+      $migration_ids[$map['4_column_col3']] = "blb_region_col_3";
+      $migration_ids[$map['4_column_col4']] = "blb_region_col_4";
+    }
+    elseif (array_key_exists($type, $map)) {
+      $migration_ids[$map[$type]] = "blb_region_col_1";
+    }
+    else {
+      throw new LayoutMigrationMissingParagraphToLayoutException($this->t('Missing custom paragraph migration for paragraph type @type.', ['@type' => $type]));
+    }
+    return $migration_ids;
   }
 
   /**
