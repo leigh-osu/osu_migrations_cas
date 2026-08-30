@@ -56,9 +56,20 @@ class CasMediaCaptionSeed extends SourcePluginBase implements ContainerFactoryPl
   }
 
   /**
+   * Restricts seeding to a mid set, or NULL for every image media.
+   *
+   * @return array|null
+   *   mid => TRUE for each media in scope, or NULL for no restriction.
+   */
+  protected function scopeMids(): ?array {
+    return NULL;
+  }
+
+  /**
    * {@inheritdoc}
    */
   protected function initializeIterator() {
+    $scope = $this->scopeMids();
     // Media that already have a non-empty caption are skipped.
     $has_caption = [];
     foreach ($this->d10->query("SELECT entity_id AS mid FROM {media__field_media_caption} WHERE field_media_caption_value IS NOT NULL AND field_media_caption_value <> ''") as $r) {
@@ -70,7 +81,7 @@ class CasMediaCaptionSeed extends SourcePluginBase implements ContainerFactoryPl
       FROM {media__field_media_image} WHERE delta = 0");
     foreach ($res as $r) {
       $mid = (int) $r->mid;
-      if (isset($has_caption[$mid])) {
+      if (isset($has_caption[$mid]) || ($scope !== NULL && !isset($scope[$mid]))) {
         continue;
       }
       $alt = trim((string) $r->alt);

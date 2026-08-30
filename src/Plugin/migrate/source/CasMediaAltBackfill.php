@@ -72,6 +72,13 @@ class CasMediaAltBackfill extends SourcePluginBase implements ContainerFactoryPl
   }
 
   /**
+   * The migrate map table translating source fids to image media ids.
+   */
+  protected function mediaImageMapTable(): string {
+    return 'migrate_map_upgrade_d7_media_images';
+  }
+
+  /**
    * Aggregates the D7 per-delta field alt/title, keyed by fid.
    *
    * @return array
@@ -128,7 +135,7 @@ class CasMediaAltBackfill extends SourcePluginBase implements ContainerFactoryPl
 
     // Reverse the media-image map: mid => fid (1 file : 1 media).
     $mid_to_fid = [];
-    foreach ($this->d10->query('SELECT sourceid1 AS fid, destid1 AS mid FROM {migrate_map_upgrade_d7_media_images} WHERE destid1 IS NOT NULL') as $r) {
+    foreach ($this->d10->query('SELECT sourceid1 AS fid, destid1 AS mid FROM {' . $this->mediaImageMapTable() . '} WHERE destid1 IS NOT NULL') as $r) {
       $mid_to_fid[(int) $r->mid] = (int) $r->fid;
     }
 
